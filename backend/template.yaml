@@ -1,0 +1,40 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: BUS INFO LK simple API (routes + next bus)
+
+Globals:
+  Function:
+    Runtime: nodejs18.x
+    Timeout: 5
+    MemorySize: 128
+    Architectures:
+      - x86_64
+
+Resources:
+  GetRoutesFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: functions/getRoutes/
+      Handler: index.handler
+      Events:
+        ApiEvent:
+          Type: Api
+          Properties:
+            Path: /routes
+            Method: GET
+  GetNextBusFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: functions/getNextBus/
+      Handler: index.handler
+      Events:
+        ApiEvent:
+          Type: Api
+          Properties:
+            Path: /next
+            Method: GET
+
+Outputs:
+  RoutesApi:
+    Description: API endpoint base URL
+    Value: !Sub 'https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/'

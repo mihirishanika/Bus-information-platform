@@ -1,0 +1,6 @@
+.next-bus { margin-top:1.25rem; font-family:system-ui; }
+.next-bus__title { margin:0 0 0.75rem; font-size:1.05rem; }
+.next-bus__panel { background:#f1f5f9; border:1px solid #e2e8f0; padding:0.9rem 1rem; border-radius:6px; }
+.next-bus__eta { font-size:0.95rem; }
+.next-bus__eta strong { color:#0d9488; }
+.next-bus__error { background:#fee2e2; color:#991b1b; padding:0.6rem 0.75rem; border-radius:6px; font-size:0.85rem; margin-top:0.5rem; }

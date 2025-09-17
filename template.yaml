@@ -1,0 +1,38 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: NUS Bus Information Platform - Serverless Backend
+Globals:
+  Function:
+    Timeout: 10
+    Runtime: nodejs18.x
+    MemorySize: 128
+    Tracing: Active
+
+Resources:
+  GetRoutesFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: backend/functions/getRoutes/
+      Handler: index.handler
+      Events:
+        ApiEvent:
+          Type: Api
+          Properties:
+            Path: /routes
+            Method: get
+  GetNextBusFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: backend/functions/getNextBus/
+      Handler: index.handler
+      Events:
+        ApiEvent:
+          Type: Api
+          Properties:
+            Path: /next
+            Method: get
+
+Outputs:
+  ApiUrl:
+    Description: Base URL for API Gateway
+    Value: !Sub 'https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod'

@@ -1,0 +1,17 @@
+.profile { font-family:system-ui; max-width:620px; background:linear-gradient(135deg,rgba(124,58,237,0.08),rgba(147,51,234,0.05)); border:1px solid rgba(147,51,234,0.25); padding:1.25rem 1.6rem 1.6rem; border-radius:22px; box-shadow:0 8px 28px -12px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.04); backdrop-filter:blur(4px); color:var(--dp-text); }
+.profile__header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:0.85rem; }
+.profile__title { margin:0; font-size:1.35rem; background:var(--gradient-primary); -webkit-background-clip:text; background-clip:text; color:transparent; font-weight:700; }
+.profile__view-row { margin:0.4rem 0; font-size:0.8rem; }
+.profile__label { font-weight:600; color:var(--dp-text-dim); }
+.profile__actions { display:flex; gap:0.6rem; margin-top:0.75rem; }
+.profile__btn { background:var(--dp-gradient-accent); color:#fff; border:none; padding:0.55rem 1rem; font-size:0.7rem; font-weight:600; border-radius:10px; cursor:pointer; box-shadow:0 4px 14px -6px rgba(124,58,237,0.6); }
+.profile__btn.outline { background:rgba(255,255,255,0.08); color:var(--dp-text); border:1px solid rgba(147,51,234,0.45); }
+.profile__edit-form { display:flex; flex-direction:column; gap:0.8rem; }
+.profile__field { display:flex; flex-direction:column; font-size:0.6rem; font-weight:600; letter-spacing:.5px; text-transform:uppercase; color:var(--dp-text-dim); }
+.profile__field input { margin-top:4px; padding:0.55rem 0.65rem; border:1px solid var(--dp-border); border-radius:10px; font-size:0.75rem; background:rgba(255,255,255,0.06); color:var(--dp-text); }
+.profile__field input:focus { outline:none; border-color:var(--dp-accent); box-shadow:0 0 0 3px rgba(var(--dp-accent-rgb),0.4); }
+.profile__section-divider { height:1px; background:linear-gradient(90deg,rgba(255,255,255,0.08),rgba(147,51,234,0.4),rgba(255,255,255,0)); margin:0.25rem 0 0.35rem; }
+.profile__row-split { display:grid; gap:0.85rem; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); }
+.profile__save { margin-top:0.6rem; background:var(--dp-gradient-accent); color:#fff; border:none; padding:0.75rem 1.2rem; font-weight:600; font-size:0.8rem; border-radius:16px; cursor:pointer; box-shadow:0 6px 20px -8px rgba(124,58,237,0.65); }
+.profile__error { background:rgba(239,68,68,0.15); color:#fca5a5; padding:0.55rem 0.7rem; border-radius:10px; font-size:0.6rem; }
+.profile__success { background:rgba(16,185,129,0.18); color:#6ee7b7; padding:0.55rem 0.7rem; border-radius:10px; font-size:0.6rem; }

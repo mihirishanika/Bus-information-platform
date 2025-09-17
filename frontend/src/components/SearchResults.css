@@ -1,0 +1,17 @@
+.search-results { font-family:system-ui; }
+.search-results__bar { display:flex; align-items:center; gap:0.75rem; margin-bottom:0.5rem; }
+.search-results__back { background:#e2e8f0; border:none; padding:0.5rem 0.85rem; border-radius:8px; cursor:pointer; font-size:0.75rem; font-weight:600; }
+.search-results__title { margin:0; font-size:1.2rem; background:var(--gradient-primary); -webkit-background-clip:text; background-clip:text; color:transparent; }
+.search-results__summary { font-size:0.75rem; margin:0 0 0.9rem; color:#475569; }
+.search-results__list { display:grid; gap:0.85rem; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); }
+.search-results__card { background:linear-gradient(135deg,#ffffff,#f1f5f9); border:1px solid #e2e8f0; border-radius:14px; padding:0.75rem 0.9rem 0.85rem; display:flex; flex-direction:column; gap:0.35rem; box-shadow:0 4px 14px -6px rgba(30,41,59,0.25); }
+.search-results__header { display:flex; justify-content:space-between; align-items:center; }
+.search-results__bus-number { font-weight:700; font-size:0.95rem; color:#1e3a8a; letter-spacing:.5px; }
+.search-results__company { font-size:0.65rem; font-weight:600; text-transform:uppercase; letter-spacing:1px; color:#475569; }
+.search-results__route { font-size:0.75rem; font-weight:600; }
+.search-results__meta { display:flex; flex-wrap:wrap; gap:0.45rem; font-size:0.6rem; text-transform:uppercase; letter-spacing:.5px; font-weight:600; color:#334155; }
+.search-results__verify-row { display:flex; align-items:center; justify-content:space-between; margin-top:0.25rem; }
+.search-results__badge { font-size:0.55rem; background:#e2e8f0; padding:0.25rem 0.55rem; border-radius:40px; font-weight:700; letter-spacing:.5px; }
+.search-results__badge.verified { background:#16a34a; color:#fff; }
+.search-results__vote-btn { background:var(--color-primary); color:#fff; border:none; padding:0.4rem 0.75rem; border-radius:10px; font-size:0.6rem; font-weight:600; cursor:pointer; }
+.search-results__empty { grid-column:1/-1; background:#f1f5f9; border:1px dashed #cbd5e1; padding:1.25rem; font-size:0.75rem; text-align:center; border-radius:12px; }
