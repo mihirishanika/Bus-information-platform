@@ -1,40 +1,187 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
-Description: BUS INFO LK simple API (routes + next bus)
+Description: BUS INFO LK - Bus Information Platform with DynamoDB
+
+Parameters:
+  UserPoolArn:
+    Type: String
+    Description: ARN of the Cognito User Pool to authorize API requests
+  AllowedOrigin:
+    Type: String
+    Default: '*'
+    Description: CORS allowed origin for API responses
 
 Globals:
   Function:
     Runtime: nodejs18.x
-    Timeout: 5
+    Timeout: 10
     MemorySize: 128
     Architectures:
       - x86_64
+    Environment:
+      Variables:
+        BUS_TABLE_NAME: !Ref BusTable
 
 Resources:
+  # DynamoDB Table for Bus Information
+  BusTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: buses
+      AttributeDefinitions:
+        - AttributeName: licenseNo
+          AttributeType: S
+        - AttributeName: companyName
+          AttributeType: S
+        - AttributeName: route
+          AttributeType: S
+      KeySchema:
+        - AttributeName: licenseNo
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: CompanyIndex
+          KeySchema:
+            - AttributeName: companyName
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+          BillingMode: PAY_PER_REQUEST
+        - IndexName: RouteIndex
+          KeySchema:
+            - AttributeName: route
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+          BillingMode: PAY_PER_REQUEST
+      BillingMode: PAY_PER_REQUEST
+
+  # API Gateway with Cognito Authorization
+  ApiGateway:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: Prod
+      Cors:
+        AllowMethods: "'GET,POST,PUT,DELETE,OPTIONS'"
+        AllowHeaders: "'Content-Type,Authorization'"
+        AllowOrigin: !Sub "'${AllowedOrigin}'"
+      Auth:
+        DefaultAuthorizer: CognitoAuth
+        Authorizers:
+          CognitoAuth:
+            UserPoolArn: !Ref UserPoolArn
+
+  # Public route: /routes (legacy compatibility)
   GetRoutesFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: functions/getRoutes/
+      CodeUri: backend/functions/getRoutes/
       Handler: index.handler
       Events:
         ApiEvent:
           Type: Api
           Properties:
+            RestApiId: !Ref ApiGateway
             Path: /routes
-            Method: GET
+            Method: get
+            Auth:
+              Authorizer: NONE
+
+  # Public route: /next (legacy compatibility)
   GetNextBusFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: functions/getNextBus/
+      CodeUri: backend/functions/getNextBus/
       Handler: index.handler
       Events:
         ApiEvent:
           Type: Api
           Properties:
+            RestApiId: !Ref ApiGateway
             Path: /next
-            Method: GET
+            Method: get
+            Auth:
+              Authorizer: NONE
+
+  # Bus CRUD Operations
+  BusFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: backend/functions/buses/
+      Handler: index.handler
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref BusTable
+      Events:
+        # Create bus (authenticated)
+        CreateBus:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ApiGateway
+            Path: /buses
+            Method: post
+        # List buses (public for search)
+        ListBuses:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ApiGateway
+            Path: /buses
+            Method: get
+            Auth:
+              Authorizer: NONE
+        # Get specific bus (public)
+        GetBus:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ApiGateway
+            Path: /buses/{licenseNo}
+            Method: get
+            Auth:
+              Authorizer: NONE
+        # Update bus (authenticated)
+        UpdateBus:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ApiGateway
+            Path: /buses/{licenseNo}
+            Method: put
+
+  # Search buses (public)
+  SearchBusFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: backend/functions/searchBuses/
+      Handler: index.handler
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Ref BusTable
+      Events:
+        SearchBus:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ApiGateway
+            Path: /search
+            Method: get
+            Auth:
+              Authorizer: NONE
+
+  # Protected ping endpoint
+  ProtectedPingFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: backend/functions/protectedPing/
+      Handler: index.handler
+      Events:
+        ApiEvent:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ApiGateway
+            Path: /protected/ping
+            Method: get
 
 Outputs:
-  RoutesApi:
-    Description: API endpoint base URL
-    Value: !Sub 'https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/'
+  ApiUrl:
+    Description: Base URL for API Gateway
+    Value: !Sub 'https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/Prod'
+  BusTableName:
+    Description: DynamoDB table name for buses
+    Value: !Ref BusTable

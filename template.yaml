@@ -1,25 +1,106 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
-Description: NUS Bus Information Platform - Serverless Backend
+Description: BUS INFO LK - Bus Information Platform with DynamoDB (No Auth Mode)
+
+Parameters:
+  AllowedOrigin:
+    Type: String
+    Default: '*'
+    Description: CORS allowed origin for API responses
+
 Globals:
   Function:
-    Timeout: 10
     Runtime: nodejs18.x
-    MemorySize: 128
-    Tracing: Active
+    Timeout: 10
+    MemorySize: 256
+    Architectures:
+      - x86_64
+    Environment:
+      Variables:
+        BUS_TABLE_NAME: !Ref BusTable
+        CORS_ORIGIN: !Ref AllowedOrigin
 
 Resources:
+  # DynamoDB Table for Bus Information
+  BusTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub "${AWS::StackName}-buses"
+      AttributeDefinitions:
+        - AttributeName: licenseNo
+          AttributeType: S
+        - AttributeName: companyName
+          AttributeType: S
+        - AttributeName: route
+          AttributeType: S
+        - AttributeName: busType
+          AttributeType: S
+      KeySchema:
+        - AttributeName: licenseNo
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: CompanyIndex
+          KeySchema:
+            - AttributeName: companyName
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+        - IndexName: RouteIndex
+          KeySchema:
+            - AttributeName: route
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+        - IndexName: TypeIndex
+          KeySchema:
+            - AttributeName: busType
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+      BillingMode: PAY_PER_REQUEST
+      StreamSpecification:
+        StreamViewType: NEW_AND_OLD_IMAGES
+
+  # API Gateway (No Auth)
+  ApiGatewayNoAuth:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: Prod
+      Cors:
+        AllowMethods: "'GET,POST,PUT,DELETE,OPTIONS'"
+        AllowHeaders: "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token'"
+        AllowOrigin: !Sub "'${AllowedOrigin}'"
+        MaxAge: "'86400'"
+      GatewayResponses:
+        DEFAULT_4XX:
+          ResponseParameters:
+            Headers:
+              Access-Control-Allow-Origin: !Sub "'${AllowedOrigin}'"
+              Access-Control-Allow-Headers: "'Content-Type,Authorization'"
+        DEFAULT_5XX:
+          ResponseParameters:
+            Headers:
+              Access-Control-Allow-Origin: !Sub "'${AllowedOrigin}'"
+              Access-Control-Allow-Headers: "'Content-Type,Authorization'"
+
+  # Lambda Functions
+
   GetRoutesFunction:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: backend/functions/getRoutes/
       Handler: index.handler
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Ref BusTable
       Events:
         ApiEvent:
           Type: Api
           Properties:
+            RestApiId: !Ref ApiGatewayNoAuth
             Path: /routes
             Method: get
+
   GetNextBusFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -29,10 +110,88 @@ Resources:
         ApiEvent:
           Type: Api
           Properties:
+            RestApiId: !Ref ApiGatewayNoAuth
             Path: /next
+            Method: get
+
+  BusFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: backend/functions/buses/
+      Handler: index.handler
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref BusTable
+      Events:
+        CreateBus:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ApiGatewayNoAuth
+            Path: /buses
+            Method: post
+        ListBuses:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ApiGatewayNoAuth
+            Path: /buses
+            Method: get
+        GetBus:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ApiGatewayNoAuth
+            Path: /buses/{licenseNo}
+            Method: get
+        UpdateBus:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ApiGatewayNoAuth
+            Path: /buses/{licenseNo}
+            Method: put
+
+  SearchBusFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: backend/functions/searchBuses/
+      Handler: index.handler
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Ref BusTable
+      Events:
+        SearchBus:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ApiGatewayNoAuth
+            Path: /search
+            Method: get
+
+  ProtectedPingFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: backend/functions/protectedPing/
+      Handler: index.handler
+      Events:
+        ApiEvent:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ApiGatewayNoAuth
+            Path: /protected/ping
             Method: get
 
 Outputs:
   ApiUrl:
     Description: Base URL for API Gateway
-    Value: !Sub 'https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod'
+    Value: !Sub 'https://${ApiGatewayNoAuth}.execute-api.${AWS::Region}.amazonaws.com/Prod'
+    Export:
+      Name: !Sub "${AWS::StackName}-ApiUrl"
+      
+  BusTableName:
+    Description: DynamoDB table name for buses
+    Value: !Ref BusTable
+    Export:
+      Name: !Sub "${AWS::StackName}-BusTableName"
+      
+  BusTableArn:
+    Description: DynamoDB table ARN for buses
+    Value: !GetAtt BusTable.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-BusTableArn"

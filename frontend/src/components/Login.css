@@ -3,18 +3,29 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 6rem 1rem 3rem;
+    /* Match Browse padding and background */
+    padding: 6rem 2.5rem 4rem;
     background: var(--home-bg, #E8EBF1);
     position: relative;
 }
 
-/* Overlay like Home */
+/* Keep decorative overlay similar to Browse */
 .auth-root::before {
     content: "";
     position: fixed;
     inset: 0;
-    background: radial-gradient(circle at 20% 15%, rgba(30, 58, 138, 0.05), transparent 55%), radial-gradient(circle at 80% 85%, rgba(37, 99, 235, 0.05), transparent 55%);
+    background:
+        radial-gradient(circle at 20% 15%, rgba(30, 58, 138, 0.04), transparent 50%),
+        radial-gradient(circle at 80% 85%, rgba(37, 99, 235, 0.03), transparent 50%);
     pointer-events: none;
+}
+
+/* Center inner content and respect max width like Browse */
+.auth-root>* {
+    position: relative;
+    z-index: 1;
+    max-width: 1200px;
+    margin: 0 auto;
 }
 
 .auth-card {
@@ -134,7 +145,7 @@
     box-shadow: 0 6px 16px -6px rgba(30, 58, 138, 0.4);
 }
 
-/* Inputs unify with Home search styling (assuming global .input class elsewhere) */
+/* Inputs unify with Home search styling */
 input.input,
 .auth-field input {
     width: 100%;
@@ -156,28 +167,54 @@ input.input:focus,
     box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15), 0 4px 6px -1px var(--home-shadow, rgba(31, 41, 55, 0.08));
 }
 
-@media (prefers-color-scheme: dark) {
+/* Link-style action buttons (Create / Already have account) */
+.link-btn {
+    appearance: none;
+    -webkit-appearance: none;
+    border: 1px solid rgba(37, 99, 235, 0.35);
+    background: rgba(37, 99, 235, 0.08);
+    color: var(--home-secondary, #2563EB);
+    padding: 0.55rem 0.9rem;
+    border-radius: 999px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    font-size: 0.62rem;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    box-shadow: 0 2px 6px -2px rgba(30, 58, 138, 0.25);
+    transition: background .3s, color .3s, transform .3s, box-shadow .3s, border-color .3s;
+}
+
+.link-btn::after {
+    content: '›';
+    display: inline-block;
+    transform: translateX(0);
+    transition: transform .3s;
+}
+
+.link-btn:hover {
+    background: linear-gradient(135deg, var(--home-primary, #1E3A8A), var(--home-secondary, #2563EB));
+    color: #ffffff;
+    border-color: var(--home-secondary, #2563EB);
+    box-shadow: 0 6px 16px -6px rgba(30, 58, 138, 0.4);
+    transform: translateY(-2px);
+}
+
+.link-btn:hover::after {
+    transform: translateX(2px);
+}
+
+.link-btn:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.25), 0 2px 6px -2px rgba(30, 58, 138, 0.25);
+}
+
+/* Responsive to match Browse */
+@media (max-width: 640px) {
     .auth-root {
-        background: #0f172a;
-    }
-
-    .auth-card {
-        background: rgba(30, 41, 59, 0.9);
-        border-color: rgba(255, 255, 255, 0.08);
-    }
-
-    input.input,
-    .auth-field input {
-        background: rgba(30, 41, 59, 0.85);
-        color: #f1f5f9;
-        border-color: rgba(255, 255, 255, 0.12);
-    }
-
-    .auth-action {
-        box-shadow: 0 6px 16px -6px rgba(30, 58, 138, 0.55);
-    }
-
-    .google-btn {
-        background: rgba(30, 41, 59, 0.85);
+        padding: 5.5rem 1.25rem 3.25rem;
     }
 }

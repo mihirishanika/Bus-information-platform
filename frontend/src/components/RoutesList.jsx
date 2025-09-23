@@ -13,7 +13,7 @@ export default function RoutesList({ routes, selected, onSelect }) {
 						className={"btn-route" + (selected && selected.id === r.id ? ' selected' : '')}
 						onClick={() => onSelect(r)}
 					>
-						<strong>{r.code}</strong> – {r.name}
+						<strong>{r.code}</strong> – {r.name || `${r.from} → ${r.to}`}
 					</button>
 				</li>
 			))}

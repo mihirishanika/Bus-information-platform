@@ -1,11 +1,16 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import './Home.css';
+import { searchBuses } from '../api';
 
-export default function Home({ user, routes = [] }) {
+export default function Home({ user, routes = [], onSearch }) {
   // Search & filter state
   const [query, setQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
   const [verifiedOnly, setVerifiedOnly] = useState(false);
+  const [searchResults, setSearchResults] = useState([]);
+  const [searching, setSearching] = useState(false);
+  const [searchError, setSearchError] = useState(null);
+
   // Tick every minute so time-based stats (departures, greeting) stay fresh
   const [timeTick, setTimeTick] = useState(0);
 
@@ -14,27 +19,79 @@ export default function Home({ user, routes = [] }) {
     return () => clearInterval(id);
   }, []);
 
+  // Perform search when query or filters change
+  useEffect(() => {
+    if (query.trim()) {
+      performSearch();
+    } else {
+      setSearchResults([]);
+      setSearchError(null);
+    }
+  }, [query, typeFilter, verifiedOnly]);
+
+  const performSearch = async () => {
+    if (!query.trim()) return;
+
+    setSearching(true);
+    setSearchError(null);
+
+    try {
+      const filters = {
+        type: typeFilter === 'all' ? undefined : typeFilter,
+        verified: verifiedOnly || undefined
+      };
+
+      const response = await searchBuses(query.trim(), filters);
+      setSearchResults(response.buses || []);
+    } catch (error) {
+      console.error('Search error:', error);
+      setSearchError(error.message || 'Search failed');
+      setSearchResults([]);
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  const popular = useMemo(() => {
+    // Use search results if available, otherwise fallback to routes
+    const sourceRoutes = searchResults.length > 0 ? searchResults : routes;
+    return sourceRoutes.filter(r => r.verified || (r.verifiedVotes && r.verifiedVotes >= 3)).slice(0, 6);
+  }, [routes, searchResults]);
+
+  // Simple stats: total routes, verified routes, estimated departures
+  const stats = useMemo(() => {
+    const sourceRoutes = searchResults.length > 0 ? searchResults : routes;
+    const total = sourceRoutes.length;
+    const verified = sourceRoutes.filter(r => r.verified || (r.verifiedVotes && r.verifiedVotes >= 3)).length;
+    const departures = estimateDepartures(sourceRoutes);
+    return { total, verified, departures };
+  }, [routes, searchResults, timeTick]);
+
   const filtered = useMemo(() => {
-    const q = query.toLowerCase();
+    if (query.trim()) {
+      return searchResults.filter(r => {
+        if (verifiedOnly && !r.verified) return false;
+        if (typeFilter !== 'all' && r.busType !== typeFilter && r.type !== typeFilter) return false;
+        return true;
+      });
+    }
+
+    // No search query - filter from routes
     return routes.filter(r => {
       if (verifiedOnly && !r.verified) return false;
       if (typeFilter !== 'all' && r.type !== typeFilter) return false;
-      if (q && !(`${r.code} ${r.name}`.toLowerCase().includes(q))) return false;
       return true;
     });
-  }, [routes, query, typeFilter, verifiedOnly]);
-
-  const popular = useMemo(() => routes.filter(r => r.popular).slice(0, 6), [routes]);
-
-  // Simple stats: total routes, verified routes, estimated departures so far today
-  const stats = useMemo(() => {
-    const total = routes.length;
-    const verified = routes.filter(r => r.verified).length;
-    const departures = estimateDepartures(routes);
-    return { total, verified, departures };
-  }, [routes, timeTick]); // depend on minute tick so departures update
+  }, [routes, searchResults, query, typeFilter, verifiedOnly]);
 
   const greeting = getGreeting();
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    if (query.trim() && onSearch) {
+      onSearch(query.trim());
+    }
+  };
 
   const getFilterLabel = (type) => {
     switch (type) {
@@ -63,9 +120,9 @@ export default function Home({ user, routes = [] }) {
   return (
     <div className="home">
       <h2 className="home__greeting">Good {greeting}, {user?.name || 'Traveler'}</h2>
-      <p className="home__sub">Find reliable bus routes and real-time transit information</p>
+      <p className="home__sub">Find reliable bus routes and real-time transit information across Sri Lanka</p>
 
-      <div className="home__searchbar">
+      <form className="home__searchbar" onSubmit={handleSearchSubmit}>
         <input
           type="text"
           placeholder="Search routes, destinations, bus numbers..."
@@ -73,7 +130,21 @@ export default function Home({ user, routes = [] }) {
           onChange={(e) => setQuery(e.target.value)}
           aria-label="Search bus routes"
         />
-      </div>
+      </form>
+
+      {searchError && (
+        <div style={{
+          color: 'var(--home-error)',
+          textAlign: 'center',
+          margin: '1rem 0',
+          padding: '0.75rem',
+          backgroundColor: 'rgba(185, 28, 28, 0.1)',
+          borderRadius: '0.5rem',
+          fontSize: '0.9rem'
+        }}>
+          {searchError}
+        </div>
+      )}
 
       <div className="home__filters">
         {['all', 'luxury', 'semi', 'normal'].map(t => (
@@ -105,15 +176,15 @@ export default function Home({ user, routes = [] }) {
             height: '1px',
             overflow: 'hidden'
           }}
-        >When enabled, only routes verified by transit authorities are shown.</span>
+        >When enabled, only routes verified by the community are shown.</span>
       </label>
 
-      <h3 className="home__section-title">Popular Transit Routes</h3>
+      <h3 className="home__section-title">Popular Bus Routes</h3>
       <ul className="home__popular-list">
         {popular.map(r => (
-          <li key={r.id} className="home__popular-item">
-            <span className="home__popular-code">Route {r.code}</span>
-            <span>{r.name}</span>
+          <li key={r.id || r.licenseNo} className="home__popular-item">
+            <span className="home__popular-code">{r.code || r.busNumber || r.licenseNo}</span>
+            <span>{r.name || `${r.from} → ${r.to}`}</span>
             <span className={badgeClass(r.verified)}>
               {getVerificationText(r.verified)}
             </span>
@@ -122,7 +193,7 @@ export default function Home({ user, routes = [] }) {
         {popular.length === 0 && (
           <li className="home__popular-item">
             <span className="home__popular-code">No Routes</span>
-            <span>No popular routes available at this time</span>
+            <span>No popular bus routes available at this time</span>
             <span className={badgeClass(false, true)}>Check back later</span>
           </li>
         )}
@@ -145,22 +216,30 @@ export default function Home({ user, routes = [] }) {
       </div>
 
       <h3 className="home__section-title" style={{ marginTop: '3rem' }}>
-        Search Results ({filtered.length} {filtered.length === 1 ? 'route' : 'routes'})
+        {query.trim() ? `Search Results (${filtered.length} ${filtered.length === 1 ? 'route' : 'routes'})` :
+          `All Routes (${filtered.length} ${filtered.length === 1 ? 'route' : 'routes'})`}
       </h3>
+
+      {searching && (
+        <div style={{ textAlign: 'center', color: 'var(--home-text-secondary)', margin: '2rem 0' }}>
+          Searching...
+        </div>
+      )}
+
       <ul className="home__popular-list">
         {filtered.map(r => (
-          <li key={r.id} className="home__popular-item">
-            <span className="home__popular-code">Route {r.code}</span>
-            <span>{r.name}</span>
+          <li key={r.id || r.licenseNo} className="home__popular-item">
+            <span className="home__popular-code">{r.code || r.busNumber || r.licenseNo}</span>
+            <span>{r.name || `${r.from} → ${r.to}`}</span>
             <span className={badgeClass(r.verified)}>
               {getVerificationText(r.verified)}
             </span>
           </li>
         ))}
-        {filtered.length === 0 && (
-          <li className="home__popular-item">
+        {filtered.length === 0 && !searching && (
+          <li className="home__popular-item home__popular-item--empty">
             <span className="home__popular-code">No Results</span>
-            <span>No routes match your current search criteria</span>
+            <span>No bus routes match your current search criteria</span>
             <span className={badgeClass(false, true)}>Try different filters</span>
           </li>
         )}

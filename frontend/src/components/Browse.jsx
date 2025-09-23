@@ -8,7 +8,7 @@ const RECENT_KEY = 'browseRecentSearches';
 function loadRecent() {
   try { return JSON.parse(localStorage.getItem(RECENT_KEY)) || []; } catch { return []; }
 }
-function saveRecent(list) { localStorage.setItem(RECENT_KEY, JSON.stringify(list.slice(0,8))); }
+function saveRecent(list) { localStorage.setItem(RECENT_KEY, JSON.stringify(list.slice(0, 8))); }
 
 export default function Browse({ routes, selected, onSelect, apiBase, onSearch }) {
   const [query, setQuery] = useState('');
@@ -37,27 +37,31 @@ export default function Browse({ routes, selected, onSelect, apiBase, onSearch }
         <input
           placeholder="Search bus routes..."
           value={query}
-          onChange={e=>setQuery(e.target.value)}
-          onBlur={()=>commitSearch(query)}
-          onKeyDown={e=>{ if (e.key==='Enter') { commitSearch(query); onSearch && onSearch(query); } }}
+          onChange={e => setQuery(e.target.value)}
+          onBlur={() => commitSearch(query)}
+          onKeyDown={e => { if (e.key === 'Enter') { commitSearch(query); onSearch && onSearch(query); } }}
         />
       </div>
       {recent.length > 0 && (
         <div className="browse__recent">
           <span className="browse__recent-label">Recent Searches</span>
-          {recent.map((r,i)=>(
-            <span key={i} className="browse__recent-item" onClick={()=>{handleRecentClick(r); onSearch && onSearch(r);} }>{r}</span>
+          {recent.map((r, i) => (
+            <span
+              key={i}
+              className={"browse__recent-item" + (query === r ? ' active' : '')}
+              onClick={() => { handleRecentClick(r); onSearch && onSearch(r); }}
+            >{r}</span>
           ))}
         </div>
       )}
 
-      <div className="browse__layout" style={{marginTop:'1rem'}}>
+      <div className="browse__layout" style={{ marginTop: '1rem' }}>
         <div className="browse__left">
-          <h2 style={{marginTop:0}}>Routes ({filtered.length})</h2>
+          <h2 style={{ marginTop: 0 }}>Routes ({filtered.length})</h2>
           <RoutesList routes={filtered} selected={selected} onSelect={onSelect} />
         </div>
         <div className="browse__right">
-          <h2 style={{marginTop:0}}>Next Bus</h2>
+          <h2 style={{ marginTop: 0 }}>Next Bus</h2>
           {selected ? <NextBus route={selected} apiBase={apiBase} /> : <p>Select a route.</p>}
         </div>
       </div>

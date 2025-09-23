@@ -4,8 +4,22 @@
 	display: flex;
 	flex-direction: column;
 	padding-top: 72px;
-	background: #0f0b16;
-	background: radial-gradient(circle at 35% 15%, rgba(124, 58, 237, 0.22), transparent 60%), radial-gradient(circle at 80% 70%, rgba(147, 51, 234, 0.18), transparent 65%), linear-gradient(135deg, #0f0b16, #171225 50%, #1f1830);
+	padding-bottom: 80px;
+	/* space for bottom nav + safe areas */
+	/* space for bottom nav */
+	background: var(--home-bg, #E8EBF1);
+	position: relative;
+}
+
+.app-container::before {
+	content: "";
+	position: fixed;
+	inset: 0;
+	background:
+		radial-gradient(circle at 20% 15%, rgba(30, 58, 138, 0.04), transparent 50%),
+		radial-gradient(circle at 80% 85%, rgba(37, 99, 235, 0.03), transparent 50%);
+	pointer-events: none;
+	z-index: 0;
 }
 
 /* === Unified Navigation (Home color palette) ===================================== */
@@ -18,7 +32,8 @@
 	right: 0;
 	z-index: 100;
 	display: flex;
-	justify-content: space-between;
+	justify-content: center;
+	/* center title */
 	align-items: center;
 	padding: 0.85rem 1.5rem;
 	background: linear-gradient(135deg, var(--home-primary, #1E3A8A) 0%, var(--home-secondary, #2563EB) 70%);
@@ -57,6 +72,7 @@ nav .btn-danger {
 	position: relative;
 	transition: background .35s cubic-bezier(.4, 0, .2, 1), color .35s, box-shadow .35s, border-color .35s, transform .35s;
 	text-transform: uppercase;
+	-webkit-backdrop-filter: blur(6px);
 	-webkit-backdrop-filter: blur(6px);
 	backdrop-filter: blur(6px);
 }
@@ -106,6 +122,7 @@ nav .btn-danger:hover {
 	letter-spacing: .08em;
 	font-weight: 600;
 	-webkit-backdrop-filter: blur(8px);
+	-webkit-backdrop-filter: blur(8px);
 	backdrop-filter: blur(8px);
 	border: 1px solid rgba(255, 255, 255, 0.55);
 	box-shadow: 0 2px 6px -2px rgba(0, 0, 0, 0.2);
@@ -129,16 +146,9 @@ nav .btn-danger:hover {
 	}
 }
 
+/* old header pill kept for potential inline use elsewhere */
 .header-user {
-	font-size: 0.6rem;
-	color: var(--dp-text);
-	background: rgba(255, 255, 255, 0.08);
-	padding: 0.45rem 0.7rem;
-	border-radius: 999px;
-	letter-spacing: .5px;
-	font-weight: 500;
-	backdrop-filter: blur(6px);
-	border: 1px solid rgba(255, 255, 255, 0.1);
+	display: none;
 }
 
 /* Responsive tweaks */
