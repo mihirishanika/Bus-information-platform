@@ -1,6 +1,6 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect, useCallback, useRef } from 'react';
 import './Home.css';
-import { searchBuses } from '../api';
+import { searchBuses, searchDirectionalBuses } from '../api';
 
 export default function Home({ user, routes = [], onSearch }) {
   // Search & filter state
@@ -11,6 +11,18 @@ export default function Home({ user, routes = [], onSearch }) {
   const [searching, setSearching] = useState(false);
   const [searchError, setSearchError] = useState(null);
 
+  // Directional search state
+  const [searchMode, setSearchMode] = useState('general'); // 'general' or 'directional'
+  const [fromLocation, setFromLocation] = useState('');
+  const [toLocation, setToLocation] = useState('');
+
+  // Autocomplete & recent searches
+  const [suggestions, setSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [recentSearches, setRecentSearches] = useState([]);
+  const suggestionsRef = useRef(null);
+  const [searchCounts, setSearchCounts] = useState({}); // query -> count
+
   // Tick every minute so time-based stats (departures, greeting) stay fresh
   const [timeTick, setTimeTick] = useState(0);
 
@@ -19,15 +31,33 @@ export default function Home({ user, routes = [], onSearch }) {
     return () => clearInterval(id);
   }, []);
 
+  // Load recent searches from localStorage
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem('recentBusSearches') || '[]');
+      if (Array.isArray(saved)) setRecentSearches(saved);
+    } catch { }
+  }, []);
+
+  // Load search counts from localStorage
+  useEffect(() => {
+    try {
+      const counts = JSON.parse(localStorage.getItem('busSearchCounts') || '{}');
+      if (counts && typeof counts === 'object') setSearchCounts(counts);
+    } catch { }
+  }, []);
+
   // Perform search when query or filters change
   useEffect(() => {
-    if (query.trim()) {
+    if (searchMode === 'general' && query.trim()) {
       performSearch();
+    } else if (searchMode === 'directional' && fromLocation.trim() && toLocation.trim()) {
+      performDirectionalSearch();
     } else {
       setSearchResults([]);
       setSearchError(null);
     }
-  }, [query, typeFilter, verifiedOnly]);
+  }, [query, typeFilter, verifiedOnly, searchMode, fromLocation, toLocation]);
 
   const performSearch = async () => {
     if (!query.trim()) return;
@@ -46,6 +76,29 @@ export default function Home({ user, routes = [], onSearch }) {
     } catch (error) {
       console.error('Search error:', error);
       setSearchError(error.message || 'Search failed');
+      setSearchResults([]);
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  const performDirectionalSearch = async () => {
+    if (!fromLocation.trim() || !toLocation.trim()) return;
+
+    setSearching(true);
+    setSearchError(null);
+
+    try {
+      const filters = {
+        type: typeFilter === 'all' ? undefined : typeFilter,
+        verified: verifiedOnly || undefined
+      };
+
+      const response = await searchDirectionalBuses(fromLocation.trim(), toLocation.trim(), filters);
+      setSearchResults(response.buses || []);
+    } catch (error) {
+      console.error('Directional search error:', error);
+      setSearchError(error.message || 'Directional search failed');
       setSearchResults([]);
     } finally {
       setSearching(false);
@@ -86,10 +139,54 @@ export default function Home({ user, routes = [], onSearch }) {
 
   const greeting = getGreeting();
 
+  // Helper to persist recent queries
+  const saveRecent = useCallback((q) => {
+    try {
+      const trimmed = q.trim();
+      if (!trimmed) return;
+      const next = [trimmed, ...recentSearches.filter(x => x !== trimmed)].slice(0, 6);
+      setRecentSearches(next);
+      localStorage.setItem('recentBusSearches', JSON.stringify(next));
+    } catch { }
+  }, [recentSearches]);
+
+  // Increment a search count for popularity computation
+  const incrementSearchCount = useCallback((q) => {
+    try {
+      const trimmed = q.trim();
+      if (!trimmed) return;
+      const next = { ...searchCounts, [trimmed]: (searchCounts[trimmed] || 0) + 1 };
+      setSearchCounts(next);
+      localStorage.setItem('busSearchCounts', JSON.stringify(next));
+    } catch { }
+  }, [searchCounts]);
+
+  const triggerSearch = useCallback((q) => {
+    setQuery(q);
+    saveRecent(q);
+    incrementSearchCount(q);
+    if (onSearch) onSearch(q);
+  }, [onSearch, saveRecent, incrementSearchCount]);
+
   const handleSearchSubmit = (e) => {
     e.preventDefault();
-    if (query.trim() && onSearch) {
-      onSearch(query.trim());
+    if (searchMode === 'general' && query.trim()) {
+      triggerSearch(query.trim());
+    } else if (searchMode === 'directional' && fromLocation.trim() && toLocation.trim()) {
+      const directionalQuery = `${fromLocation.trim()} → ${toLocation.trim()}`;
+      saveRecent(directionalQuery);
+      incrementSearchCount(directionalQuery);
+      if (onSearch) onSearch(directionalQuery);
+    }
+  };
+
+  const handleDirectionalSearchSubmit = (e) => {
+    e.preventDefault();
+    if (fromLocation.trim() && toLocation.trim()) {
+      const directionalQuery = `${fromLocation.trim()} → ${toLocation.trim()}`;
+      saveRecent(directionalQuery);
+      incrementSearchCount(directionalQuery);
+      if (onSearch) onSearch(directionalQuery);
     }
   };
 
@@ -117,20 +214,191 @@ export default function Home({ user, routes = [], onSearch }) {
     return value.toLocaleString();
   };
 
+  // Autocomplete logic
+  const commonDestinations = useMemo(() => ({
+    Colombo: ['Kandy', 'Jaffna', 'Galle', 'Matara', 'Negombo', 'Badulla'],
+    Kandy: ['Colombo', 'Nuwara Eliya', 'Kurunegala'],
+    Jaffna: ['Colombo', 'Vavuniya'],
+    Galle: ['Colombo', 'Matara'],
+  }), []);
+
+  const buildSuggestions = useCallback((text) => {
+    const t = text.trim();
+    if (!t) return [];
+
+    const items = new Set();
+    const lower = t.toLowerCase();
+
+    // From routes list
+    routes.forEach(r => {
+      const from = r.from || r.origin;
+      const to = r.to || r.destination;
+      const license = r.licenseNo || r.busNumber;
+      const company = r.companyName || r.company;
+
+      if (from && to) {
+        const pair = `${from} → ${to}`;
+        const pairAlt = `${to} → ${from}`;
+        if (pair.toLowerCase().includes(lower)) items.add(pair);
+        if (pairAlt.toLowerCase().includes(lower)) items.add(pairAlt);
+        if (from.toLowerCase().startsWith(lower)) {
+          const targets = commonDestinations[from] || [];
+          targets.forEach(dst => items.add(`${from} → ${dst}`));
+        }
+        if (to.toLowerCase().startsWith(lower)) {
+          const targets = commonDestinations[to] || [];
+          targets.forEach(dst => items.add(`${to} → ${dst}`));
+        }
+      }
+      if (license && license.toLowerCase().includes(lower)) items.add(license);
+      if (company && company.toLowerCase().includes(lower)) items.add(company);
+    });
+
+    // Curated shortcuts when a city typed
+    Object.keys(commonDestinations).forEach(city => {
+      if (city.toLowerCase().startsWith(lower)) {
+        commonDestinations[city].forEach(dst => items.add(`${city} → ${dst}`));
+      }
+    });
+
+    return Array.from(items).slice(0, 8);
+  }, [routes, commonDestinations]);
+
+  // Position for suggestions
+  const [suggestionsPosition, setSuggestionsPosition] = useState(0);
+
+  // Update suggestions position when showing them
+  useEffect(() => {
+    if (showSuggestions && suggestionsRef.current) {
+      const rect = suggestionsRef.current.getBoundingClientRect();
+      setSuggestionsPosition(rect.bottom + window.scrollY);
+    }
+  }, [showSuggestions]);
+
+  // Hide suggestions on outside click
+  useEffect(() => {
+    const onDocClick = (e) => {
+      if (!suggestionsRef.current) return;
+      if (!suggestionsRef.current.contains(e.target)) setShowSuggestions(false);
+    };
+    document.addEventListener('click', onDocClick);
+    return () => document.removeEventListener('click', onDocClick);
+  }, []);
+
   return (
     <div className="home">
       <h2 className="home__greeting">Good {greeting}, {user?.name || 'Traveler'}</h2>
-      <p className="home__sub">Find reliable bus routes and real-time transit information across Sri Lanka</p>
+      <p className="home__sub">Find reliable bus routes and verified bus info across Sri Lanka</p>
 
-      <form className="home__searchbar" onSubmit={handleSearchSubmit}>
-        <input
-          type="text"
-          placeholder="Search routes, destinations, bus numbers..."
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          aria-label="Search bus routes"
-        />
-      </form>
+      {/* Search Mode Toggle */}
+      <div className="home__search-mode-toggle">
+        <button
+          type="button"
+          className={`search-mode-btn ${searchMode === 'general' ? 'active' : ''}`}
+          onClick={() => {
+            setSearchMode('general');
+            setSearchResults([]);
+            setSearchError(null);
+          }}
+        >
+          General Search
+        </button>
+        <button
+          type="button"
+          className={`search-mode-btn ${searchMode === 'directional' ? 'active' : ''}`}
+          onClick={() => {
+            setSearchMode('directional');
+            setSearchResults([]);
+            setSearchError(null);
+          }}
+        >
+          Route Search
+        </button>
+      </div>
+
+      {/* General Search Form */}
+      {searchMode === 'general' && (
+        <form className="home__searchbar" onSubmit={handleSearchSubmit} ref={suggestionsRef}>
+          <input
+            type="text"
+            placeholder="Search routes, destinations, bus numbers..."
+            value={query}
+            onFocus={() => {
+              setSuggestions(buildSuggestions(query));
+              setShowSuggestions(true);
+            }}
+            onChange={(e) => {
+              const v = e.target.value;
+              setQuery(v);
+              setSuggestions(buildSuggestions(v));
+              setShowSuggestions(true);
+            }}
+            aria-label="Search bus routes"
+            aria-autocomplete="list"
+            aria-expanded={showSuggestions}
+          />
+          {showSuggestions && suggestions.length > 0 && (
+            <ul
+              className="home__suggestions"
+              role="listbox"
+              style={{ top: `${suggestionsPosition}px` }}
+            >
+              {suggestions.map((s, i) => (
+                <li
+                  key={s + i}
+                  role="option"
+                  className="home__suggestion-item"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => {
+                    triggerSearch(s);
+                    setShowSuggestions(false);
+                  }}
+                >
+                  {s}
+                </li>
+              ))}
+            </ul>
+          )}
+        </form>
+      )}
+
+      {/* Directional Search Form */}
+      {searchMode === 'directional' && (
+        <form className="home__directional-search" onSubmit={handleDirectionalSearchSubmit}>
+          <div className="directional-search-inputs">
+            <div className="location-input-group">
+              <label htmlFor="from-location">From</label>
+              <input
+                id="from-location"
+                type="text"
+                placeholder="Starting location (e.g., Colombo)"
+                value={fromLocation}
+                onChange={(e) => setFromLocation(e.target.value)}
+                aria-label="Starting location"
+              />
+            </div>
+            <div className="search-arrow" aria-hidden="true">→</div>
+            <div className="location-input-group">
+              <label htmlFor="to-location">To</label>
+              <input
+                id="to-location"
+                type="text"
+                placeholder="Destination (e.g., Jaffna)"
+                value={toLocation}
+                onChange={(e) => setToLocation(e.target.value)}
+                aria-label="Destination location"
+              />
+            </div>
+            <button
+              type="submit"
+              className="directional-search-btn"
+              disabled={!fromLocation.trim() || !toLocation.trim()}
+            >
+              Search Routes
+            </button>
+          </div>
+        </form>
+      )}
 
       {searchError && (
         <div style={{
@@ -146,12 +414,14 @@ export default function Home({ user, routes = [], onSearch }) {
         </div>
       )}
 
+      {/* Quick Categories removed to avoid duplication with filters */}
+
       <div className="home__filters">
-        {['all', 'luxury', 'semi', 'normal'].map(t => (
+        {['luxury', 'semi', 'normal'].map(t => (
           <button
             key={t}
             className={'home__filter-btn' + (typeFilter === t ? ' active' : '')}
-            onClick={() => setTypeFilter(t)}
+            onClick={() => setTypeFilter(prev => (prev === t ? 'all' : t))}
             aria-pressed={typeFilter === t}
           >
             {getFilterLabel(t)}
@@ -180,70 +450,37 @@ export default function Home({ user, routes = [], onSearch }) {
       </label>
 
       <h3 className="home__section-title">Popular Bus Routes</h3>
-      <ul className="home__popular-list">
-        {popular.map(r => (
-          <li key={r.id || r.licenseNo} className="home__popular-item">
-            <span className="home__popular-code">{r.code || r.busNumber || r.licenseNo}</span>
-            <span>{r.name || `${r.from} → ${r.to}`}</span>
-            <span className={badgeClass(r.verified)}>
-              {getVerificationText(r.verified)}
-            </span>
-          </li>
-        ))}
-        {popular.length === 0 && (
-          <li className="home__popular-item">
-            <span className="home__popular-code">No Routes</span>
-            <span>No popular bus routes available at this time</span>
-            <span className={badgeClass(false, true)}>Check back later</span>
-          </li>
-        )}
-      </ul>
+      <PopularRoutes
+        routes={routes}
+        verifiedPopular={popular}
+        searchCounts={searchCounts}
+        onPick={(label) => triggerSearch(label)}
+        badgeClass={badgeClass}
+        getVerificationText={getVerificationText}
+      />
 
-      <h3 className="home__section-title">Transit Statistics Today</h3>
-      <div className="home__stats">
-        <div className="home__stat-box">
-          <p className="home__stat-label">Total Routes</p>
-          <p className="home__stat-value">{formatStatValue(stats.total, 'total')}</p>
-        </div>
-        <div className="home__stat-box">
-          <p className="home__stat-label">Verified Routes</p>
-          <p className="home__stat-value">{formatStatValue(stats.verified, 'verified')}</p>
-        </div>
-        <div className="home__stat-box">
-          <p className="home__stat-label">Daily Departures</p>
-          <p className="home__stat-value">{formatStatValue(stats.departures, 'departures')}</p>
-        </div>
-      </div>
-
-      <h3 className="home__section-title" style={{ marginTop: '3rem' }}>
-        {query.trim() ? `Search Results (${filtered.length} ${filtered.length === 1 ? 'route' : 'routes'})` :
-          `All Routes (${filtered.length} ${filtered.length === 1 ? 'route' : 'routes'})`}
-      </h3>
-
-      {searching && (
-        <div style={{ textAlign: 'center', color: 'var(--home-text-secondary)', margin: '2rem 0' }}>
-          Searching...
-        </div>
+      {/* Recent searches - styled like route boxes */}
+      {recentSearches.length > 0 && (
+        <>
+          <h3 className="home__section-title">Recent Searches</h3>
+          <ul className="home__popular-list">
+            {recentSearches.map((q) => (
+              <li
+                key={q}
+                className="home__popular-item"
+                onClick={() => triggerSearch(q)}
+                role="button"
+              >
+                <span className="home__popular-code">{q}</span>
+                <span>Tap to search this route</span>
+                <span className={badgeClass(false, true)}>Quick Search</span>
+              </li>
+            ))}
+          </ul>
+        </>
       )}
 
-      <ul className="home__popular-list">
-        {filtered.map(r => (
-          <li key={r.id || r.licenseNo} className="home__popular-item">
-            <span className="home__popular-code">{r.code || r.busNumber || r.licenseNo}</span>
-            <span>{r.name || `${r.from} → ${r.to}`}</span>
-            <span className={badgeClass(r.verified)}>
-              {getVerificationText(r.verified)}
-            </span>
-          </li>
-        ))}
-        {filtered.length === 0 && !searching && (
-          <li className="home__popular-item home__popular-item--empty">
-            <span className="home__popular-code">No Results</span>
-            <span>No bus routes match your current search criteria</span>
-            <span className={badgeClass(false, true)}>Try different filters</span>
-          </li>
-        )}
-      </ul>
+      {/* Transit Statistics section removed as requested */}
     </div>
   );
 }
@@ -266,4 +503,53 @@ function estimateDepartures(routes) {
     const routeDepartures = Math.max(0, Math.floor(minutes / headway));
     return sum + routeDepartures;
   }, 0);
+}
+
+// Subcomponent: PopularRoutes
+function PopularRoutes({ routes, verifiedPopular, searchCounts, onPick, badgeClass, getVerificationText }) {
+  // Build a map from a route label to count based on saved searchCounts
+  const ranked = React.useMemo(() => {
+    // Only consider existing routes
+    const labels = routes.map(r => r.name ? r.name : `${r.from} → ${r.to}`);
+    const unique = Array.from(new Set(labels));
+    const withScores = unique.map(label => ({ label, score: searchCounts[label] || 0 }));
+    // Sort by score desc
+    withScores.sort((a, b) => b.score - a.score);
+    // Take top 6 with score > 0
+    return withScores.filter(x => x.score > 0).slice(0, 6);
+  }, [routes, searchCounts]);
+
+  // Fallback to verifiedPopular (existing verified routes) if ranked is empty
+  const items = ranked.length > 0 ? ranked.map(r => ({ label: r.label })) : verifiedPopular.map(r => ({ label: r.name ? r.name : `${r.from} → ${r.to}`, verified: r.verified }));
+
+  if (!items || items.length === 0) {
+    return (
+      <ul className="home__popular-list">
+        <li className="home__popular-item">
+          <span className="home__popular-code">No Routes</span>
+          <span>No popular bus routes available at this time</span>
+          <span className={badgeClass(false, true)}>Check back later</span>
+        </li>
+      </ul>
+    );
+  }
+
+  return (
+    <ul className="home__popular-list">
+      {items.map((it, idx) => (
+        <li
+          key={it.label + idx}
+          className="home__popular-item"
+          onClick={() => onPick(it.label)}
+          role="button"
+        >
+          <span className="home__popular-code">{it.label}</span>
+          <span>Explore buses and schedules</span>
+          <span className={badgeClass(!!it.verified)}>
+            {it.verified ? getVerificationText(true) : 'Popular'}
+          </span>
+        </li>
+      ))}
+    </ul>
+  );
 }

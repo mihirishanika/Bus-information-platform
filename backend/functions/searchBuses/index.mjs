@@ -29,6 +29,9 @@ export const handler = async (event) => {
         const verifiedOnly = queryParams.verified === 'true';
         const companyName = queryParams.company;
         const route = queryParams.route;
+        const directional = queryParams.directional === 'true';
+        const from = queryParams.from ? queryParams.from.trim() : '';
+        const to = queryParams.to ? queryParams.to.trim() : '';
 
         // Start with empty results
         let allBuses = [];
@@ -46,6 +49,118 @@ export const handler = async (event) => {
         } else {
             // Full scan for general search
             allBuses = await getAllBuses();
+        }
+
+        // Handle directional search
+        if (directional && from && to) {
+            allBuses = allBuses.filter(bus => {
+                const busFrom = (bus.from || '').toLowerCase().trim();
+                const busTo = (bus.to || '').toLowerCase().trim();
+                const searchFrom = from.toLowerCase().trim();
+                const searchTo = to.toLowerCase().trim();
+
+                // More flexible matching - check if search terms are contained in bus locations
+                // Also handle common location variations
+                const normalizeLocation = (loc) => {
+                    return loc.toLowerCase()
+                        .replace(/\s+/g, '')
+                        .replace(/fort|central|main|bus\s*stand|station/g, '');
+                };
+
+                const normalizedBusFrom = normalizeLocation(busFrom);
+                const normalizedBusTo = normalizeLocation(busTo);
+                const normalizedSearchFrom = normalizeLocation(searchFrom);
+                const normalizedSearchTo = normalizeLocation(searchTo);
+
+                // Check both forward and return directions with flexible matching
+                const isForwardMatch =
+                    (normalizedBusFrom.includes(normalizedSearchFrom) || normalizedSearchFrom.includes(normalizedBusFrom)) &&
+                    (normalizedBusTo.includes(normalizedSearchTo) || normalizedSearchTo.includes(normalizedBusTo));
+
+                const isReturnMatch =
+                    (normalizedBusFrom.includes(normalizedSearchTo) || normalizedSearchTo.includes(normalizedBusFrom)) &&
+                    (normalizedBusTo.includes(normalizedSearchFrom) || normalizedSearchFrom.includes(normalizedBusTo));
+
+                return isForwardMatch || isReturnMatch;
+            });
+
+            // Transform buses with directional journey information
+            const directionalBuses = allBuses.map(bus => {
+                const busFrom = (bus.from || '').toLowerCase().trim();
+                const busTo = (bus.to || '').toLowerCase().trim();
+                const searchFrom = from.toLowerCase().trim();
+                const searchTo = to.toLowerCase().trim();
+
+                // Use the same flexible matching logic for direction determination
+                const normalizeLocation = (loc) => {
+                    return loc.toLowerCase()
+                        .replace(/\s+/g, '')
+                        .replace(/fort|central|main|bus\s*stand|station/g, '');
+                };
+
+                const normalizedBusFrom = normalizeLocation(busFrom);
+                const normalizedBusTo = normalizeLocation(busTo);
+                const normalizedSearchFrom = normalizeLocation(searchFrom);
+                const normalizedSearchTo = normalizeLocation(searchTo);
+
+                // Determine if this is a forward or return journey match
+                const isForwardMatch =
+                    (normalizedBusFrom.includes(normalizedSearchFrom) || normalizedSearchFrom.includes(normalizedBusFrom)) &&
+                    (normalizedBusTo.includes(normalizedSearchTo) || normalizedSearchTo.includes(normalizedBusTo));
+
+                const isReturnMatch =
+                    (normalizedBusFrom.includes(normalizedSearchTo) || normalizedSearchTo.includes(normalizedBusFrom)) &&
+                    (normalizedBusTo.includes(normalizedSearchFrom) || normalizedSearchFrom.includes(normalizedBusTo));
+
+                let relevantJourneys = [];
+                let direction = '';
+                let routeName = '';
+
+                if (isForwardMatch) {
+                    relevantJourneys = bus.journeys || [];
+                    direction = 'forward';
+                    routeName = `${bus.from} → ${bus.to}`;
+                } else if (isReturnMatch) {
+                    relevantJourneys = bus.returnJourneys || [];
+                    direction = 'return';
+                    routeName = `${bus.to} → ${bus.from}`;
+                }
+
+                return {
+                    ...bus,
+                    id: bus.id || bus.licenseNo,
+                    relevantJourneys,
+                    direction,
+                    dailyDepartures: relevantJourneys.length,
+                    verified: (bus.verifiedVotes || 0) >= 3,
+                    verifyCount: bus.verifyCount || 0,
+                    reportCount: bus.reportCount || 0,
+                    code: bus.busNumber || bus.licenseNo,
+                    name: routeName,
+                    type: bus.busType || 'normal',
+                    searchDirection: `${from} → ${to}`
+                };
+            });
+
+            return {
+                statusCode: 200,
+                headers: corsHeaders,
+                body: JSON.stringify({
+                    buses: directionalBuses,
+                    count: directionalBuses.length,
+                    totalFound: directionalBuses.length,
+                    directional: true,
+                    searchRoute: `${from} → ${to}`,
+                    filters: {
+                        type: busType,
+                        verifiedOnly,
+                        company: companyName,
+                        route: route,
+                        from,
+                        to
+                    }
+                })
+            };
         }
 
         // Apply text-based filtering if query is provided
@@ -80,8 +195,10 @@ export const handler = async (event) => {
         const buses = allBuses.slice(0, 50).map(bus => ({
             ...bus,
             id: bus.id || bus.licenseNo,
-            dailyDepartures: bus.journeys?.length || bus.dailyDepartures || 0,
+            dailyDepartures: (bus.journeys?.length || 0) + (bus.returnJourneys?.length || 0) || bus.dailyDepartures || 0,
             verified: (bus.verifiedVotes || 0) >= 3,
+            verifyCount: bus.verifyCount || 0,
+            reportCount: bus.reportCount || 0,
             code: bus.busNumber || bus.licenseNo,
             name: bus.route || `${bus.from} → ${bus.to}`,
             type: bus.busType || 'normal'

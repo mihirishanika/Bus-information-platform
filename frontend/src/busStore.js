@@ -10,38 +10,9 @@ export function loadBuses() {
 }
 
 function seed() {
-  const sample = [
-    {
-      id: 'seed1',
-      busNumber: 'NC-1234',
-      companyName: 'SuperLine',
-      from: 'Colombo',
-      to: 'Kandy',
-      dailyDepartures: 6,
-      journeyDuration: '3h 15m',
-      adultFare: 1200,
-      verifiedVotes: 4,
-      createdAt: Date.now() - 86400000,
-      busType: 'semi',
-      seatCount: 45,
-      year: 2020
-    },
-    {
-      id: 'seed2',
-      busNumber: 'NA-8899',
-      companyName: 'Eagle Travels',
-      from: 'Kandy',
-      to: 'Galle',
-      dailyDepartures: 2,
-      journeyDuration: '5h 10m',
-      adultFare: 1800,
-      verifiedVotes: 2,
-      createdAt: Date.now() - 5600000,
-      busType: 'luxury',
-      seatCount: 35,
-      year: 2019
-    }
-  ];
+  // Return empty array instead of hardcoded sample data
+  // Bus data should be added through the application interface
+  const sample = [];
   localStorage.setItem(KEY, JSON.stringify(sample));
   return sample;
 }
@@ -121,7 +92,7 @@ export async function migrateToAPI() {
 
   for (const bus of localBuses) {
     try {
-      // Skip if it looks like seed data
+      // Skip if it looks like seed data (no real data to migrate)
       if (bus.id && bus.id.startsWith('seed')) continue;
 
       // Create via API

@@ -35,6 +35,8 @@ Resources:
           AttributeType: S
         - AttributeName: route
           AttributeType: S
+        - AttributeName: busType
+          AttributeType: S
       KeySchema:
         - AttributeName: licenseNo
           KeyType: HASH
@@ -45,14 +47,18 @@ Resources:
               KeyType: HASH
           Projection:
             ProjectionType: ALL
-          BillingMode: PAY_PER_REQUEST
         - IndexName: RouteIndex
           KeySchema:
             - AttributeName: route
               KeyType: HASH
           Projection:
             ProjectionType: ALL
-          BillingMode: PAY_PER_REQUEST
+        - IndexName: TypeIndex
+          KeySchema:
+            - AttributeName: busType
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
       BillingMode: PAY_PER_REQUEST
 
   # API Gateway with Cognito Authorization
@@ -74,7 +80,7 @@ Resources:
   GetRoutesFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: backend/functions/getRoutes/
+      CodeUri: functions/getRoutes/
       Handler: index.handler
       Events:
         ApiEvent:
@@ -90,7 +96,7 @@ Resources:
   GetNextBusFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: backend/functions/getNextBus/
+      CodeUri: functions/getNextBus/
       Handler: index.handler
       Events:
         ApiEvent:
@@ -106,19 +112,21 @@ Resources:
   BusFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: backend/functions/buses/
+      CodeUri: functions/buses/
       Handler: index.handler
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref BusTable
       Events:
-        # Create bus (authenticated)
+        # Create bus (temporarily public for testing)
         CreateBus:
           Type: Api
           Properties:
             RestApiId: !Ref ApiGateway
             Path: /buses
             Method: post
+            Auth:
+              Authorizer: NONE
         # List buses (public for search)
         ListBuses:
           Type: Api
@@ -137,19 +145,48 @@ Resources:
             Method: get
             Auth:
               Authorizer: NONE
-        # Update bus (authenticated)
+        # Update bus (temporarily public for testing)
         UpdateBus:
           Type: Api
           Properties:
             RestApiId: !Ref ApiGateway
             Path: /buses/{licenseNo}
             Method: put
+            Auth:
+              Authorizer: NONE
+        # Verify bus (temporarily public for testing)
+        VerifyBus:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ApiGateway
+            Path: /buses/{licenseNo}/verify
+            Method: post
+            Auth:
+              Authorizer: NONE
+        # Report bus (temporarily public for testing)
+        ReportBus:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ApiGateway
+            Path: /buses/{licenseNo}/report
+            Method: post
+            Auth:
+              Authorizer: NONE
+        # Get user vote for bus (temporarily public for testing)
+        GetUserVote:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ApiGateway
+            Path: /buses/{licenseNo}/vote
+            Method: get
+            Auth:
+              Authorizer: NONE
 
   # Search buses (public)
   SearchBusFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: backend/functions/searchBuses/
+      CodeUri: functions/searchBuses/
       Handler: index.handler
       Policies:
         - DynamoDBReadPolicy:
@@ -168,7 +205,7 @@ Resources:
   ProtectedPingFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: backend/functions/protectedPing/
+      CodeUri: functions/protectedPing/
       Handler: index.handler
       Events:
         ApiEvent:

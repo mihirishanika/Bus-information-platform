@@ -43,7 +43,7 @@ export const handler = async (event) => {
 			verified: (bus.verifiedVotes || 0) >= 3,
 			popular: (bus.verifiedVotes || 0) >= 2,
 			headwayMins: 15, // Default headway
-			dailyDepartures: bus.journeys?.length || bus.dailyDepartures || 0
+			dailyDepartures: (bus.journeys?.length || 0) + (bus.returnJourneys?.length || 0) || bus.dailyDepartures || 0
 		}));
 
 		return {

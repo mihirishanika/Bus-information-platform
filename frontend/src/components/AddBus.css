@@ -340,29 +340,38 @@
 .add-bus__journeys {
 	display: flex;
 	flex-direction: column;
-	gap: 0.85rem;
+	gap: 1.25rem;
 }
 
 .add-bus__journey-row {
 	display: grid;
 	gap: 1rem;
 	grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+	padding: 1.25rem;
+	background: rgba(255, 255, 255, 0.7);
+	border: 1px solid var(--home-border-light, #E5E7EB);
+	border-radius: 1rem;
+	box-shadow: 0 2px 6px -2px var(--home-shadow, rgba(31, 41, 55, 0.08));
+	position: relative;
 }
 
 .add-bus__add-journey {
-	margin-top: 0.25rem;
+	margin-top: 0.5rem;
 	align-self: flex-start;
 	background: linear-gradient(135deg, var(--home-primary, #1E3A8A), var(--home-secondary, #2563EB));
 	color: #fff;
 	border: none;
-	padding: 0.7rem 1rem;
-	border-radius: 1rem;
+	padding: 0.9rem 1.5rem;
+	border-radius: 1.25rem;
 	font-size: 0.8rem;
 	font-weight: 700;
 	cursor: pointer;
 	letter-spacing: .04em;
 	box-shadow: 0 4px 10px -4px rgba(30, 58, 138, 0.35);
 	transition: all .3s cubic-bezier(.4, 0, .2, 1);
+	display: inline-flex;
+	align-items: center;
+	gap: 0.5rem;
 }
 
 .add-bus__add-journey:hover {

@@ -93,6 +93,8 @@
     gap: 1rem;
     margin-bottom: 2.5rem;
     position: relative;
+    z-index: 1000000;
+    /* Ensure search container has highest stacking context */
 }
 
 .home__searchbar input {
@@ -115,6 +117,46 @@
     background-size: 1.5rem;
 }
 
+/* Autocomplete dropdown */
+.home__suggestions {
+    position: fixed;
+    top: auto;
+    left: 50%;
+    transform: translateX(-50%);
+    width: calc(100% - 5rem);
+    max-width: 1200px;
+    background: var(--home-card);
+    border: 2px solid var(--home-secondary);
+    border-radius: 1rem;
+    margin-top: 0.5rem;
+    padding: 0.5rem;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    list-style: none;
+    z-index: 999999;
+    /* Extremely high z-index to guarantee top placement above all components */
+}
+
+.home__suggestion-item {
+    padding: 0.85rem 1rem;
+    border-radius: 0.75rem;
+    cursor: pointer;
+    font-weight: 600;
+    color: var(--home-text);
+    transition: all 0.2s ease;
+    margin-bottom: 0.25rem;
+    border: 1px solid transparent;
+    position: relative;
+    z-index: 999999;
+}
+
+.home__suggestion-item:hover {
+    background: var(--home-secondary-light);
+    color: var(--home-secondary);
+    transform: translateX(2px);
+    border-color: var(--home-secondary);
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.15);
+}
+
 .home__searchbar input:focus {
     outline: none;
     border-color: var(--home-secondary);
@@ -128,6 +170,186 @@
 .home__searchbar input::placeholder {
     color: var(--home-text-secondary);
     font-weight: 400;
+}
+
+/* Search Mode Toggle */
+.home__search-mode-toggle {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-bottom: 2rem;
+    background: var(--home-card);
+    border-radius: 2rem;
+    padding: 0.5rem;
+    border: 2px solid var(--home-border-light);
+    box-shadow: 0 2px 4px -1px var(--home-shadow);
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.search-mode-btn {
+    flex: 1;
+    padding: 0.875rem 1.5rem;
+    border: none;
+    background: transparent;
+    border-radius: 1.5rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    color: var(--home-text-secondary);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    text-align: center;
+}
+
+.search-mode-btn:hover {
+    color: var(--home-secondary);
+    background: var(--home-secondary-light);
+}
+
+.search-mode-btn.active {
+    background: linear-gradient(135deg, var(--home-primary), var(--home-secondary));
+    color: white;
+    box-shadow: 0 4px 8px -2px rgba(30, 58, 138, 0.3);
+}
+
+/* Directional Search Form */
+.home__directional-search {
+    margin-bottom: 2rem;
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.directional-search-inputs {
+    display: flex;
+    align-items: end;
+    gap: 1rem;
+    background: var(--home-card);
+    padding: 1.5rem;
+    border-radius: 2rem;
+    border: 2px solid var(--home-border-light);
+    box-shadow:
+        0 4px 6px -1px var(--home-shadow),
+        0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.location-input-group {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.location-input-group label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--home-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.location-input-group input {
+    padding: 1rem 1.25rem;
+    border: 2px solid var(--home-border-light);
+    border-radius: 1.5rem;
+    background: var(--home-bg);
+    color: var(--home-text);
+    font-size: 1rem;
+    font-weight: 500;
+    font-family: inherit;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.location-input-group input:focus {
+    outline: none;
+    border-color: var(--home-secondary);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    background: var(--home-card);
+}
+
+.location-input-group input::placeholder {
+    color: var(--home-text-secondary);
+    font-weight: 400;
+}
+
+.search-arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 3rem;
+    height: 3rem;
+    background: linear-gradient(135deg, var(--home-primary), var(--home-secondary));
+    color: white;
+    border-radius: 50%;
+    font-size: 1.25rem;
+    font-weight: 700;
+    box-shadow: 0 4px 8px -2px rgba(30, 58, 138, 0.3);
+    margin-bottom: 1rem;
+}
+
+.directional-search-btn {
+    padding: 1rem 2rem;
+    background: linear-gradient(135deg, var(--home-primary), var(--home-secondary));
+    color: white;
+    border: none;
+    border-radius: 1.5rem;
+    font-size: 0.875rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    box-shadow: 0 4px 8px -2px rgba(30, 58, 138, 0.3);
+    white-space: nowrap;
+    margin-bottom: 1rem;
+}
+
+.directional-search-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px -4px rgba(30, 58, 138, 0.4);
+}
+
+.directional-search-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Responsive Design for Directional Search */
+@media (max-width: 768px) {
+    .directional-search-inputs {
+        flex-direction: column;
+        gap: 1.5rem;
+        align-items: stretch;
+    }
+
+    .search-arrow {
+        align-self: center;
+        transform: rotate(90deg);
+        margin: 0;
+    }
+
+    .directional-search-btn {
+        margin: 0;
+        padding: 1.25rem 2rem;
+        font-size: 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .home__search-mode-toggle {
+        margin-bottom: 1.5rem;
+    }
+
+    .search-mode-btn {
+        padding: 0.75rem 1rem;
+        font-size: 0.8125rem;
+    }
+
+    .directional-search-inputs {
+        padding: 1rem;
+    }
 }
 
 /* Enhanced Filters */
@@ -191,6 +413,48 @@
         0 4px 6px -1px var(--home-shadow),
         0 10px 15px -3px rgba(30, 58, 138, 0.2);
     transform: translateY(-2px);
+}
+
+/* Quick categories removed */
+
+/* Recent searches */
+.home__recent {
+    margin-top: 1.5rem;
+}
+
+.home__recent-title {
+    margin: 0 0 .75rem;
+    font-size: .75rem;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--home-text-secondary);
+}
+
+.home__recent-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    gap: .5rem;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.home__recent-item {
+    background: var(--home-card);
+    border: 1px solid var(--home-border-light);
+    padding: .6rem .75rem;
+    border-radius: .75rem;
+    font-weight: 600;
+    color: var(--home-text);
+    cursor: pointer;
+    transition: .2s ease;
+}
+
+.home__recent-item:hover {
+    border-color: var(--home-secondary);
+    color: var(--home-secondary);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px -8px var(--home-shadow-hover);
 }
 
 /* Enhanced Toggle */
@@ -365,6 +629,40 @@
     text-align: center;
 }
 
+/* Recent Searches styled like stats */
+.home__recent-grid {
+    margin-top: 1rem;
+}
+
+.home__recent-box {
+    cursor: pointer;
+    border-radius: 1.5rem;
+    padding: 2rem;
+    text-align: center;
+}
+
+.home__recent-box .home__stat-value {
+    font-size: clamp(1.1rem, 3.5vw, 1.5rem);
+}
+
+.home__recent-box {
+    background: var(--home-card);
+    border: 2px solid var(--home-border-light);
+}
+
+.home__recent-box:hover {
+    border-color: var(--home-secondary);
+    transform: translateY(-4px);
+    box-shadow: 0 10px 15px -3px var(--home-shadow-hover), 0 4px 6px -2px var(--home-shadow);
+}
+
+.home__recent-box {
+    -webkit-appearance: none;
+    appearance: none;
+    border: none;
+    color: inherit;
+}
+
 .home__stat-box::before {
     content: "";
     position: absolute;
@@ -488,12 +786,7 @@
 
     .home__stats {
         grid-template-columns: 1fr;
-        gap: 1.5rem;
-    }
-
-    .home__searchbar input {
-        padding: 1.25rem 1rem 1.25rem 3rem;
-        background-size: 1.25rem;
+        /* Recent Searches uses route card styles (home__popular-item) */
         background-position: 1rem center;
     }
 

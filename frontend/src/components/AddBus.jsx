@@ -2,6 +2,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import './AddBus.css';
 import { addBus } from '../busStore';
 import { createBus } from '../api';
+import { IoIosAddCircle } from "react-icons/io";
 
 // Bus information creation form with proper API integration
 export default function AddBus({ onSubmit }) {
@@ -14,9 +15,11 @@ export default function AddBus({ onSubmit }) {
   const [to, setTo] = useState('');
   const [stops, setStops] = useState([]);
   const [newStop, setNewStop] = useState('');
-  // Journeys: list of { start, end }
+  // Journeys: list of { start, end } - always start with one journey
   const [journeys, setJourneys] = useState([{ start: '', end: '' }]);
   const [journeyDuration, setJourneyDuration] = useState('');
+  // Return journeys: list of { start, end } for return trips
+  const [returnJourneys, setReturnJourneys] = useState([{ start: '', end: '' }]);
   const [fareAdult, setFareAdult] = useState('');
   const [fareChild, setFareChild] = useState('');
   const [contactDriver, setContactDriver] = useState('');
@@ -43,6 +46,7 @@ export default function AddBus({ onSubmit }) {
     if (!to.trim()) errs.push('To location required');
     if (from && to && from.trim() === to.trim()) errs.push('From and To cannot be same');
     const filledJourneys = (journeys || []).filter(j => j.start && j.end);
+    const filledReturnJourneys = (returnJourneys || []).filter(j => j.start && j.end);
     if (filledJourneys.length === 0) errs.push('Add at least one journey start and end time');
     if (fareAdult && isNaN(Number(fareAdult))) errs.push('Adult fare must be numeric');
     if (fareChild && isNaN(Number(fareChild))) errs.push('Child fare must be numeric');
@@ -70,9 +74,34 @@ export default function AddBus({ onSubmit }) {
     return Promise.all(readers);
   };
 
-  const handlePhotos = (eOrFiles) => {
+  const handlePhotos = async (eOrFiles) => {
     const files = eOrFiles?.target?.files ?? eOrFiles ?? [];
-    readFilesToDataUrls(files).then(list => setPhotos(p => [...p, ...list]));
+    if (!files.length) return;
+
+    setSubmitting(true);
+    setErrors([]);
+
+    try {
+      // Import dynamically to avoid potential circular dependencies
+      const { processAndUploadImageFiles } = await import('../imageUtils');
+      const result = await processAndUploadImageFiles(files, (current, total) => {
+        console.log(`Uploading image ${current} of ${total}`);
+      });
+
+      if (result.errors.length > 0) {
+        setErrors(prev => [...prev, ...result.errors]);
+      }
+
+      if (result.photos.length > 0) {
+        setPhotos(p => [...p, ...result.photos]);
+        console.log('Images uploaded to S3:', result.photos);
+      }
+    } catch (error) {
+      console.error('Failed to upload images:', error);
+      setErrors(prev => [...prev, `Failed to upload images: ${error.message}`]);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleDrop = (e) => {
@@ -116,6 +145,7 @@ export default function AddBus({ onSubmit }) {
 
     try {
       const filledJourneys = (journeys || []).filter(j => j.start && j.end);
+      const filledReturnJourneys = (returnJourneys || []).filter(j => j.start && j.end);
 
       // Build payload according to your API structure
       const payload = {
@@ -137,7 +167,8 @@ export default function AddBus({ onSubmit }) {
 
         // Schedule and fare
         journeys: filledJourneys,
-        dailyDepartures: filledJourneys.length,
+        returnJourneys: filledReturnJourneys,
+        dailyDepartures: filledJourneys.length + filledReturnJourneys.length,
         journeyDuration: journeyDuration.trim() || null,
         adultFare: fareAdult ? Number(fareAdult) : null,
         childFare: fareChild ? Number(fareChild) : null,
@@ -149,8 +180,11 @@ export default function AddBus({ onSubmit }) {
           booking: contactBooking.trim() || null
         },
 
-        // Media
-        photos: photos,
+        // Media - store URLs instead of data URLs
+        photos: photos.map(photo => ({
+          url: photo.url || photo.data,
+          name: photo.name
+        })),
 
         // Metadata
         verified: false,
@@ -198,7 +232,8 @@ export default function AddBus({ onSubmit }) {
       setFrom('');
       setTo('');
       setStops([]);
-      setJourneys([{ start: '', end: '' }]);
+      setJourneys([{ start: '', end: '' }]); // Reset to one empty journey
+      setReturnJourneys([{ start: '', end: '' }]); // Reset to one empty return journey
       setJourneyDuration('');
       setFareAdult('');
       setFareChild('');
@@ -356,56 +391,94 @@ export default function AddBus({ onSubmit }) {
 
       <section className="add-bus__section">
         <h3 className="home__section-title">Schedule & Timetable</h3>
-        <div className="add-bus__journeys">
-          {journeys.map((journey, idx) => (
-            <div key={idx} className="add-bus__journey-row">
-              <label className="add-bus__field">
-                Journey {idx + 1} - Start Time
-                <input
-                  type="time"
-                  value={journey.start}
-                  onChange={e => {
-                    const value = e.target.value;
-                    setJourneys(prev => prev.map((item, i) =>
-                      i === idx ? { ...item, start: value } : item
-                    ));
-                  }}
-                />
-              </label>
-              <label className="add-bus__field">
-                Journey {idx + 1} - End Time
-                <input
-                  type="time"
-                  value={journey.end}
-                  onChange={e => {
-                    const value = e.target.value;
-                    setJourneys(prev => prev.map((item, i) =>
-                      i === idx ? { ...item, end: value } : item
-                    ));
-                  }}
-                />
-              </label>
-              {journeys.length > 1 && (
-                <button
-                  type="button"
-                  className="add-bus__remove-btn"
-                  onClick={() => setJourneys(prev => prev.filter((_, i) => i !== idx))}
-                  style={{ alignSelf: 'center' }}
-                >
-                  Remove Journey
-                </button>
-              )}
-            </div>
-          ))}
-          <button
-            type="button"
-            className="add-bus__add-journey"
-            onClick={() => setJourneys(prev => [...prev, { start: '', end: '' }])}
-          >
-            + Add Another Journey
-          </button>
+        <p style={{
+          fontSize: '0.8rem',
+          color: 'var(--home-text-secondary, #6B7280)',
+          marginBottom: '1rem',
+          fontStyle: 'italic'
+        }}>
+          Add journey times for the same day. Each journey represents one trip from start to destination.
+        </p>
+
+        {/* Forward Journey Section */}
+        <div style={{ marginBottom: '2rem' }}>
+          <h4 style={{
+            fontSize: '1rem',
+            fontWeight: '600',
+            color: 'var(--home-primary, #1E3A8A)',
+            marginBottom: '1rem',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem'
+          }}>
+            <span style={{
+              backgroundColor: 'var(--home-primary, #1E3A8A)',
+              color: 'white',
+              width: '24px',
+              height: '24px',
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '0.8rem',
+              fontWeight: '700'
+            }}>→</span>
+            {from || 'From'} → {to || 'To'}
+          </h4>
+          <div className="add-bus__journeys">
+            {journeys.map((journey, idx) => (
+              <div key={idx} className="add-bus__journey-row">
+                <label className="add-bus__field">
+                  Journey {idx + 1} - Start Time
+                  <input
+                    type="time"
+                    value={journey.start}
+                    onChange={e => {
+                      const value = e.target.value;
+                      setJourneys(prev => prev.map((item, i) =>
+                        i === idx ? { ...item, start: value } : item
+                      ));
+                    }}
+                  />
+                </label>
+                <label className="add-bus__field">
+                  Journey {idx + 1} - End Time
+                  <input
+                    type="time"
+                    value={journey.end}
+                    onChange={e => {
+                      const value = e.target.value;
+                      setJourneys(prev => prev.map((item, i) =>
+                        i === idx ? { ...item, end: value } : item
+                      ));
+                    }}
+                  />
+                </label>
+                {journeys.length > 1 && (
+                  <button
+                    type="button"
+                    className="add-bus__remove-btn"
+                    onClick={() => setJourneys(prev => prev.filter((_, i) => i !== idx))}
+                    style={{ alignSelf: 'center' }}
+                    title={`Remove Journey ${idx + 1}`}
+                  >
+                    Remove Journey {idx + 1}
+                  </button>
+                )}
+              </div>
+            ))}
+            <button
+              type="button"
+              className="add-bus__add-journey"
+              onClick={() => setJourneys(prev => [...prev, { start: '', end: '' }])}
+            >
+              <IoIosAddCircle size={20} />
+              Add Another Journey
+            </button>
+          </div>
         </div>
-        <div className="add-bus__grid" style={{ marginTop: '1rem' }}>
+
+        <div className="add-bus__grid" style={{ marginTop: '1rem', marginBottom: '2rem' }}>
           <label className="add-bus__field">
             Journey Duration (Optional)
             <input
@@ -414,6 +487,84 @@ export default function AddBus({ onSubmit }) {
               placeholder="Ex: 4h 30m, 2 hours 15 minutes"
             />
           </label>
+        </div>
+
+        {/* Return Journey Section */}
+        <div>
+          <h4 style={{
+            fontSize: '1rem',
+            fontWeight: '600',
+            color: 'var(--home-secondary, #2563EB)',
+            marginBottom: '1rem',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem'
+          }}>
+            <span style={{
+              backgroundColor: 'var(--home-secondary, #2563EB)',
+              color: 'white',
+              width: '24px',
+              height: '24px',
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '0.8rem',
+              fontWeight: '700'
+            }}>←</span>
+            Return Journey: {to || 'To'} → {from || 'From'}
+          </h4>
+          <div className="add-bus__journeys">
+            {returnJourneys.map((journey, idx) => (
+              <div key={idx} className="add-bus__journey-row">
+                <label className="add-bus__field">
+                  Journey {idx + 1} - Start Time
+                  <input
+                    type="time"
+                    value={journey.start}
+                    onChange={e => {
+                      const value = e.target.value;
+                      setReturnJourneys(prev => prev.map((item, i) =>
+                        i === idx ? { ...item, start: value } : item
+                      ));
+                    }}
+                  />
+                </label>
+                <label className="add-bus__field">
+                  Journey {idx + 1} - End Time
+                  <input
+                    type="time"
+                    value={journey.end}
+                    onChange={e => {
+                      const value = e.target.value;
+                      setReturnJourneys(prev => prev.map((item, i) =>
+                        i === idx ? { ...item, end: value } : item
+                      ));
+                    }}
+                  />
+                </label>
+                {returnJourneys.length > 1 && (
+                  <button
+                    type="button"
+                    className="add-bus__remove-btn"
+                    onClick={() => setReturnJourneys(prev => prev.filter((_, i) => i !== idx))}
+                    style={{ alignSelf: 'center' }}
+                    title={`Remove Return Journey ${idx + 1}`}
+                  >
+                    Remove Journey {idx + 1}
+                  </button>
+                )}
+              </div>
+            ))}
+            <button
+              type="button"
+              className="add-bus__add-journey"
+              onClick={() => setReturnJourneys(prev => [...prev, { start: '', end: '' }])}
+            >
+              <IoIosAddCircle size={20} />
+              Add Another Journey
+            </button>
+          </div>
         </div>
       </section>
 
@@ -519,7 +670,7 @@ export default function AddBus({ onSubmit }) {
           <div className="add-bus__file-preview">
             {photos.map((photo, i) => (
               <div className="add-bus__thumb" key={i}>
-                <img src={photo.data} alt={photo.name || `Bus photo ${i + 1}`} />
+                <img src={photo.url || photo.data} alt={photo.name || `Bus photo ${i + 1}`} />
                 <button
                   type="button"
                   className="add-bus__photo-remove"
