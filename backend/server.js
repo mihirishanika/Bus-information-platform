@@ -180,6 +180,42 @@ let localBuses = [
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     id: 'bus_NB-9876_1632465600002'
+  },
+  {
+    licenseNo: 'WP-5432',
+    busNumber: 'WP-5432',
+    companyName: 'Lanka Express',
+    from: 'Ja-Ela',
+    to: 'Kandy',
+    route: 'Ja-Ela → Kandy',
+    busType: 'semi',
+    seatCount: 48,
+    year: 2021,
+    journeys: [
+      { start: '05:30', end: '08:45' },
+      { start: '07:00', end: '10:15' },
+      { start: '14:30', end: '17:45' },
+      { start: '18:00', end: '21:15' }
+    ],
+    returnJourneys: [
+      { start: '06:00', end: '09:15' },
+      { start: '09:30', end: '12:45' },
+      { start: '15:00', end: '18:15' },
+      { start: '19:30', end: '22:45' }
+    ],
+    journeyDuration: '3h 15m',
+    adultFare: 320,
+    childFare: 160,
+    contacts: {
+      driver: '0771122334',
+      conductor: '0779988776',
+      booking: '0112233445'
+    },
+    stops: ['Gampaha', 'Veyangoda', 'Mirigama', 'Pasyala', 'Kegalle', 'Mawanella', 'Kadugannawa'],
+    verifiedVotes: 3,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    id: 'bus_WP-5432_1632465600003'
   }
 ];
 
@@ -681,9 +717,19 @@ app.get("/search", async (req, res) => {
     const query = req.query.q || '';
     const busType = req.query.type;
     const verifiedOnly = req.query.verified === 'true';
-    const directional = req.query.directional === 'true';
-    const from = req.query.from?.trim() || '';
-    const to = req.query.to?.trim() || '';
+    let directional = req.query.directional === 'true';
+    let from = req.query.from?.trim() || '';
+    let to = req.query.to?.trim() || '';
+
+    // Check if query is a directional search (e.g., "ja ela to kandy" or "kandy to ja ela")
+    if (!directional && query) {
+      const directionalMatch = query.match(/^(.+?)\s+to\s+(.+?)$/i);
+      if (directionalMatch) {
+        directional = true;
+        from = directionalMatch[1].trim();
+        to = directionalMatch[2].trim();
+      }
+    }
 
     let list = [];
     if (canUseDynamo) {

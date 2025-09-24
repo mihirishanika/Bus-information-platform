@@ -1,6 +1,6 @@
 import React, { useMemo, useRef, useState, useEffect } from 'react';
 import './SearchResults.css';
-import { searchBuses, voteBusVerification, getBus, verifyBus, reportBus, getUserVote } from '../api';
+import { searchBuses, searchDirectionalBuses, voteBusVerification, getBus, verifyBus, reportBus, getUserVote } from '../api';
 import { BiBus, BiMapAlt, BiMoneyWithdraw, BiSolidUser } from 'react-icons/bi';
 import { AiFillSchedule } from 'react-icons/ai';
 import { IoTime } from 'react-icons/io5';
@@ -42,7 +42,19 @@ export default function SearchResults({ query, onBack }) {
     setError(null);
 
     try {
-      const response = await searchBuses(query);
+      // Check if query is a directional search (e.g., "ja ela to kandy" or "kandy to ja ela")
+      const directionalMatch = query.match(/^(.+?)\s+to\s+(.+?)$/i);
+      let response;
+
+      if (directionalMatch) {
+        // This is a directional search
+        const [, from, to] = directionalMatch;
+        response = await searchDirectionalBuses(from.trim(), to.trim());
+      } else {
+        // Regular search
+        response = await searchBuses(query);
+      }
+
       const buses = response.buses || [];
       // Check if this is a directional search result
       setIsDirectional(response.directional || false);

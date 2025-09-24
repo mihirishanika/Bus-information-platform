@@ -1,36 +1,187 @@
+/* Modern RoutesList - Aligned with SearchResults Design */
 .routes-list {
     list-style: none;
     padding: 0;
     margin: 0;
+    display: grid;
+    gap: 1rem;
+    width: 100%;
 }
 
 .btn-route {
     width: 100%;
     text-align: left;
-    padding: 1rem 1.25rem;
-    margin-bottom: 0.75rem;
-    border: 2px solid var(--home-border-light, #E5E7EB);
+    padding: 1.5rem 2rem;
+    border: 1px solid var(--home-border-light, #E5E7EB);
     background: var(--home-card, #FFFFFF);
     color: var(--home-text, #1F2937);
-    border-radius: 1rem;
+    border-radius: 1.5rem;
     cursor: pointer;
-    box-shadow: 0 2px 4px -1px var(--home-shadow, rgba(31, 41, 55, 0.08));
-    transition: all .25s cubic-bezier(.4, 0, .2, 1);
+    font-size: 1rem;
+    font-weight: 600;
+    font-family: inherit;
+    position: relative;
+    overflow: hidden;
+    box-shadow:
+        0 4px 6px -1px rgba(31, 41, 55, 0.08),
+        0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    line-height: 1.5;
+}
+
+.btn-route::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--home-primary, #1E3A8A) 0%, var(--home-secondary, #2563EB) 100%);
+    transform: scaleX(0);
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    transform-origin: left;
+    z-index: 1;
+}
+
+.btn-route::after {
+    content: "🚌";
+    position: absolute;
+    top: 1rem;
+    right: 1.5rem;
+    font-size: 1.5rem;
+    opacity: 0.1;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    filter: grayscale(100%);
 }
 
 .btn-route:hover {
-    border-color: var(--home-secondary, #2563EB);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 6px -1px var(--home-shadow, rgba(31, 41, 55, 0.08)), 0 10px 15px -3px var(--home-shadow-hover, rgba(31, 41, 55, 0.12));
+    border-color: var(--home-secondary-light, rgba(37, 99, 235, 0.3));
+    background: var(--home-card, #FFFFFF);
+    transform: translateY(-4px);
+    box-shadow:
+        0 20px 25px -5px rgba(31, 41, 55, 0.1),
+        0 10px 10px -5px rgba(31, 41, 55, 0.04),
+        0 0 0 1px rgba(37, 99, 235, 0.08);
+}
+
+.btn-route:hover::before {
+    transform: scaleX(1);
+}
+
+.btn-route:hover::after {
+    opacity: 0.2;
+    transform: scale(1.1) rotate(5deg);
+    filter: grayscale(0%);
+}
+
+.btn-route strong {
+    font-weight: 800;
+    font-size: 1.1rem;
+    background: linear-gradient(135deg, var(--home-primary, #1E3A8A) 0%, var(--home-secondary, #2563EB) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: -0.01em;
+    margin-right: 0.5rem;
 }
 
 .btn-route.selected {
     background: linear-gradient(135deg, var(--home-primary, #1E3A8A), var(--home-secondary, #2563EB));
-    color: #fff;
+    color: #FFFFFF;
     border-color: var(--home-primary, #1E3A8A);
+    box-shadow:
+        0 0 0 3px var(--home-primary-light, rgba(30, 58, 138, 0.1)),
+        0 10px 15px -3px rgba(30, 58, 138, 0.2),
+        0 4px 6px -2px var(--home-shadow);
+    transform: translateY(-2px);
+}
+
+.btn-route.selected strong {
+    color: #FFFFFF;
+    background: none;
+    -webkit-background-clip: unset;
+    -webkit-text-fill-color: unset;
+    background-clip: unset;
+}
+
+.btn-route.selected::before {
+    transform: scaleX(1);
+    background: linear-gradient(90deg, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0.1) 100%);
+}
+
+.btn-route.selected::after {
+    opacity: 0.3;
+    filter: grayscale(0%) brightness(1.2);
 }
 
 .no-routes {
-    font-style: italic;
+    text-align: center;
+    padding: 3rem 2rem;
     color: var(--home-text-secondary, #6B7280);
+    font-size: 1.1rem;
+    font-weight: 500;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    margin: 0;
+    line-height: 1.6;
+    font-style: normal;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+.no-routes::before {
+    content: "🚌";
+    font-size: 3rem;
+    opacity: 0.3;
+    filter: grayscale(100%);
+    display: block;
+}
+
+.no-routes::after {
+    content: "Try adjusting your search or browse all available routes";
+    font-size: 0.9rem;
+    color: var(--home-text-secondary, #9CA3AF);
+    font-weight: 400;
+    display: block;
+    margin-top: 0.5rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .btn-route {
+        padding: 1.25rem 1.5rem;
+        font-size: 0.95rem;
+    }
+
+    .btn-route strong {
+        font-size: 1rem;
+    }
+
+    .btn-route::after {
+        font-size: 1.25rem;
+        top: 0.75rem;
+        right: 1.25rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .btn-route {
+        padding: 1rem 1.25rem;
+        font-size: 0.9rem;
+    }
+
+    .btn-route strong {
+        font-size: 0.95rem;
+    }
+
+    .no-routes {
+        padding: 3rem 1.5rem;
+        font-size: 1rem;
+    }
 }

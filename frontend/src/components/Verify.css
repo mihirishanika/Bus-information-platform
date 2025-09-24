@@ -126,6 +126,15 @@
 	background-clip: text;
 }
 
+.verify__route {
+	font-size: 0.95rem;
+	font-weight: 600;
+	letter-spacing: -0.01em;
+	color: var(--home-text, #1F2937);
+	margin-top: -0.25rem;
+	margin-bottom: 0.25rem;
+}
+
 .verify__btn-row {
 	display: flex;
 	gap: var(--bus-spacing-md);
@@ -163,6 +172,52 @@
 	font-size: 0.85rem;
 	font-style: italic;
 	color: var(--home-text-secondary, #6B7280);
+}
+
+.verify__loading {
+	font-size: 0.9rem;
+	text-align: center;
+	padding: 1.5rem;
+	color: var(--home-text-secondary, #6B7280);
+}
+
+.verify__error {
+	font-size: 0.9rem;
+	text-align: center;
+	padding: 1rem;
+	color: #ef4444;
+	background-color: rgba(239, 68, 68, 0.1);
+	border-radius: 0.5rem;
+	margin-bottom: 1rem;
+}
+
+.verify__success {
+	font-size: 0.9rem;
+	text-align: center;
+	padding: 1rem;
+	color: #10b981;
+	background-color: rgba(16, 185, 129, 0.1);
+	border-radius: 0.5rem;
+	margin-bottom: 1rem;
+	animation: fadeInOut 3s ease-in-out;
+}
+
+@keyframes fadeInOut {
+	0% {
+		opacity: 0;
+	}
+
+	10% {
+		opacity: 1;
+	}
+
+	80% {
+		opacity: 1;
+	}
+
+	100% {
+		opacity: 0;
+	}
 }
 
 /* Match Browse mobile container padding at <= 640px */
