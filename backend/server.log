@@ -1,8 +1,27 @@
-nohup: ignoring input
-Backend running at http://localhost:4000
-(node:506552) NOTE: The AWS SDK for JavaScript (v2) is in maintenance mode.
+(node:19424) NOTE: The AWS SDK for JavaScript (v2) is in maintenance mode.
  SDK releases are limited to address critical bug fixes and security issues only.
 
 Please migrate your code to use AWS SDK for JavaScript (v3).
 For more information, check the blog post at https://a.co/cUPnyil
 (Use `node --trace-warnings ...` to show where the warning was created)
+Backend running at http://localhost:4000
+[0mGET /health [32m200[0m 1.360 ms - 121[0m
+[0mOPTIONS /buses?limit=100 [32m204[0m 0.255 ms - 0[0m
+[0mGET /buses?limit=100 [32m200[0m 1077.258 ms - 823[0m
+[0mOPTIONS /buses?limit=100 [32m204[0m 0.164 ms - 0[0m
+[0mGET /buses?limit=100 [36m304[0m 1222.580 ms - -[0m
+[0mGET /buses [32m200[0m 1643.317 ms - 823[0m
+[0mGET /buses [32m200[0m 1166.210 ms - 823[0m
+[0mGET /search?q=Colombo [32m200[0m 1142.944 ms - 979[0m
+Cognito token verification failed: Error: Invalid token format
+    at verifyCognitoToken (file:///home/oshboy/Bus-information-platform/backend/server.js:215:13)
+    at Layer.handleRequest (/home/oshboy/Bus-information-platform/backend/node_modules/router/lib/layer.js:152:17)
+    at next (/home/oshboy/Bus-information-platform/backend/node_modules/router/lib/route.js:157:13)
+    at Route.dispatch (/home/oshboy/Bus-information-platform/backend/node_modules/router/lib/route.js:117:3)
+    at handle (/home/oshboy/Bus-information-platform/backend/node_modules/router/index.js:435:11)
+    at Layer.handleRequest (/home/oshboy/Bus-information-platform/backend/node_modules/router/lib/layer.js:152:17)
+    at /home/oshboy/Bus-information-platform/backend/node_modules/router/index.js:295:15
+    at processParams (/home/oshboy/Bus-information-platform/backend/node_modules/router/index.js:582:12)
+    at next (/home/oshboy/Bus-information-platform/backend/node_modules/router/index.js:291:5)
+    at cors (/home/oshboy/Bus-information-platform/backend/node_modules/cors/lib/index.js:188:7)
+[0mPOST /buses [33m401[0m 1.229 ms - 79[0m

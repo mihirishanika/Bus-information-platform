@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>API Test</title>
+</head>
+<body>
+    <h1>Bus Information Platform - API Test</h1>
+    
+    <div id="status">Testing...</div>
+    
+    <h2>Health Check</h2>
+    <div id="health"></div>
+    
+    <h2>Buses Data</h2>
+    <div id="buses"></div>
+    
+    <script>
+        async function testAPI() {
+            const statusDiv = document.getElementById('status');
+            const healthDiv = document.getElementById('health');
+            const busesDiv = document.getElementById('buses');
+            
+            try {
+                // Test health endpoint
+                const healthResponse = await fetch('http://localhost:4000/health');
+                const healthData = await healthResponse.json();
+                healthDiv.innerHTML = '<pre>' + JSON.stringify(healthData, null, 2) + '</pre>';
+                
+                // Test buses endpoint
+                const busesResponse = await fetch('http://localhost:4000/buses');
+                const busesData = await busesResponse.json();
+                busesDiv.innerHTML = '<pre>' + JSON.stringify(busesData, null, 2) + '</pre>';
+                
+                statusDiv.innerHTML = '<span style="color: green;">✅ API Connection Working!</span>';
+                statusDiv.innerHTML += '<br>Database: ' + (healthData.dynamo.canUse ? '✅ Connected' : '❌ Not Connected');
+                statusDiv.innerHTML += '<br>Buses in database: ' + busesData.count;
+                
+            } catch (error) {
+                statusDiv.innerHTML = '<span style="color: red;">❌ API Connection Failed: ' + error.message + '</span>';
+                console.error('API Test Error:', error);
+            }
+        }
+        
+        // Run test when page loads
+        testAPI();
+    </script>
+</body>
+</html>
