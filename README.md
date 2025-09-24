@@ -1,33 +1,95 @@
-## Bus Platform Backend & Frontend
+# Bus Information Platform
 
-### Backend Setup
+## About the Project
 
-1. Navigate to `backend/` and install dependencies:
-	- `npm install`
-2. Copy `.env.example` to `.env` and set a strong `JWT_SECRET`.
-3. Ensure DynamoDB tables exist:
-	- `user` (PK: email [string])
-	- `buses` (PK: licenseNo [string])
-4. Start in dev mode with auto-reload:
-	- `npm run dev`
+Bus Information Platform is a web application designed to provide information about buses and their routes. The platform allows users to search for buses, view bus routes, and access verified information about the buses. It features a responsive frontend built with React and a backend API powered by Node.js with AWS services integration. The application supports user authentication via Amazon Cognito, including social sign-in with Google.
 
-### Environment Variables
-See `backend/.env.example` for all variables.
+## Dependencies
 
-### API Endpoints (summary)
-- `GET /health` basic liveness check.
-- `POST /signup` create user (unique email enforced).
-- `POST /login` returns JWT.
-- `GET /me` (auth) current user profile.
-- `POST /buses` (auth) add a bus (unique licenseNo enforced).
-- `GET /buses?limit=25&cursor=<licenseNo>` list buses with pagination.
+### Backend
+- Node.js (v16 or higher)
+- npm
+- AWS DynamoDB for database
+- AWS SAM CLI for deployment
 
 ### Frontend
-Frontend lives in `frontend/` (Vite + React). Run with:
-1. `npm install`
-2. `npm run dev`
+- Node.js (v16 or higher)
+- npm
+- Web browser
 
-### Notes
-- Update CORS origin using `ALLOWED_ORIGIN` if frontend served elsewhere.
-- For production, rotate `JWT_SECRET` and consider using AWS KMS or Secrets Manager.
-- Replace full table scans with query patterns as data volume grows.
+## Running the Backend
+
+1. Navigate to the backend directory:
+   ```bash
+   cd backend
+   ```
+
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+3. Set up environment variables:
+   - Copy `.env.example` to `.env`
+   - Set a strong `JWT_SECRET` value
+   
+4. Ensure DynamoDB tables exist:
+   - `user` (Primary Key: email [string])
+   - `buses` (Primary Key: licenseNo [string])
+
+5. Start the development server with auto-reload:
+   ```bash
+   npm run dev
+   ```
+
+6. The server will be available at `http://localhost:4000`
+
+## Running the Frontend
+
+1. Navigate to the frontend directory:
+   ```bash
+   cd frontend
+   ```
+
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+3. Set up environment variables:
+   - Copy `.env.example` to `.env`
+   - Fill in the required Cognito configuration values
+     - `VITE_AWS_REGION`
+     - `VITE_COGNITO_USER_POOL_ID`
+     - `VITE_COGNITO_USER_POOL_CLIENT_ID`
+     - `VITE_COGNITO_DOMAIN` (if using hosted UI)
+     - `VITE_API_BASE` (backend API URL)
+
+4. Start the development server:
+   ```bash
+   npm run dev
+   ```
+
+5. The frontend will be available at `http://localhost:5173`
+
+## Building for Production
+
+### Frontend
+```bash
+cd frontend
+npm run build
+```
+
+### Backend (with AWS SAM)
+```bash
+sam build
+sam deploy --guided
+```
+
+## Key Features
+- User authentication with Amazon Cognito
+- Bus information search and browsing
+- Real-time next bus arrival information
+- Google sign-in integration
+- Mobile-responsive design
+

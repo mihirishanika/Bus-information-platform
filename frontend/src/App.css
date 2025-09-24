@@ -1,21 +1,176 @@
 /* Application Shell Theming */
-.app-container { min-height:100vh; display:flex; flex-direction:column; padding-top:72px; background:#0f0b16; background:radial-gradient(circle at 35% 15%,rgba(124,58,237,0.22),transparent 60%), radial-gradient(circle at 80% 70%,rgba(147,51,234,0.18),transparent 65%), linear-gradient(135deg,#0f0b16,#171225 50%,#1f1830); }
-.app-header { position:fixed; top:0; left:0; right:0; z-index:100; display:flex; justify-content:space-between; align-items:center; padding:0.75rem 1.25rem; background:var(--dp-gradient-header); backdrop-filter:blur(10px); box-shadow:var(--dp-shadow); border-bottom:1px solid rgba(255,255,255,0.07); }
-.app-header h1 { margin:0; font-size:1.2rem; letter-spacing:.5px; background:var(--gradient-primary); -webkit-background-clip:text; background-clip:text; color:transparent; font-weight:700; }
+.app-container {
+	min-height: 100vh;
+	display: flex;
+	flex-direction: column;
+	padding-top: 72px;
+	padding-bottom: 80px;
+	/* space for bottom nav + safe areas */
+	/* space for bottom nav */
+	background: var(--home-bg, #E8EBF1);
+	position: relative;
+}
 
-nav .nav-btn, nav .nav-active, nav .btn-danger { font-family:inherit; border:1px solid transparent; background:none; cursor:pointer; font-size:0.65rem; font-weight:600; letter-spacing:.5px; padding:0.55rem 0.95rem; border-radius:14px; position:relative; transition:background .3s, color .3s, box-shadow .3s, border-color .3s; text-transform:uppercase; }
-nav .nav-btn { color:#ffffff; background:rgba(255,255,255,0.12); border-color:rgba(255,255,255,0.18); }
-nav .nav-btn:hover { color:#ffffff; background:rgba(147,51,234,0.35); border-color:rgba(147,51,234,0.55); }
-nav .nav-active { background:var(--dp-gradient-accent); color:#ffffff; border-color:rgba(147,51,234,0.8); box-shadow:0 0 0 1px rgba(168,85,247,0.7), 0 4px 14px -4px rgba(124,58,237,0.75); }
-nav .btn-danger { background:var(--dp-danger); color:#fff; border-color:rgba(239,68,68,0.7); box-shadow:0 2px 8px -4px rgba(239,68,68,0.55); }
-nav .btn-danger:hover { background:var(--dp-danger-hover); }
+.app-container::before {
+	content: "";
+	position: fixed;
+	inset: 0;
+	background:
+		radial-gradient(circle at 20% 15%, rgba(30, 58, 138, 0.04), transparent 50%),
+		radial-gradient(circle at 80% 85%, rgba(37, 99, 235, 0.03), transparent 50%);
+	pointer-events: none;
+	z-index: 0;
+}
 
-.header-user { font-size:0.6rem; color:var(--dp-text); background:rgba(255,255,255,0.08); padding:0.45rem 0.7rem; border-radius:999px; letter-spacing:.5px; font-weight:500; backdrop-filter:blur(6px); border:1px solid rgba(255,255,255,0.1); }
+/* === Unified Navigation (Home color palette) ===================================== */
+/* Falls back gracefully if Home.css root vars not yet loaded */
+/* Home palette vars: --home-primary, --home-secondary, etc. */
+.app-header {
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	z-index: 100;
+	display: flex;
+	justify-content: center;
+	/* center title */
+	align-items: center;
+	padding: 0.85rem 1.5rem;
+	background: linear-gradient(135deg, var(--home-primary, #1E3A8A) 0%, var(--home-secondary, #2563EB) 70%);
+	-webkit-backdrop-filter: blur(14px);
+	backdrop-filter: blur(14px);
+	box-shadow: 0 4px 18px -6px rgba(30, 58, 138, 0.25), 0 0 0 1px rgba(37, 99, 235, 0.15);
+	border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.app-header h1 {
+	margin: 0;
+	font-size: 1.25rem;
+	letter-spacing: -0.5px;
+	font-weight: 800;
+	background: linear-gradient(135deg, #ffffff, #dbeafe);
+	-webkit-background-clip: text;
+	background-clip: text;
+	color: transparent;
+	text-transform: uppercase;
+	display: flex;
+	align-items: center;
+	gap: .5rem;
+}
+
+nav .nav-btn,
+nav .nav-active,
+nav .btn-danger {
+	font-family: inherit;
+	border: 1px solid transparent;
+	cursor: pointer;
+	font-size: 0.62rem;
+	font-weight: 700;
+	letter-spacing: .08em;
+	padding: 0.6rem 1rem;
+	border-radius: 999px;
+	position: relative;
+	transition: background .35s cubic-bezier(.4, 0, .2, 1), color .35s, box-shadow .35s, border-color .35s, transform .35s;
+	text-transform: uppercase;
+	-webkit-backdrop-filter: blur(6px);
+	-webkit-backdrop-filter: blur(6px);
+	backdrop-filter: blur(6px);
+}
+
+nav .nav-btn {
+	color: var(--home-text-secondary, #E0E7FF);
+	background: rgba(255, 255, 255, 0.12);
+	border-color: rgba(255, 255, 255, 0.18);
+	box-shadow: 0 2px 4px -2px rgba(0, 0, 0, 0.25);
+}
+
+nav .nav-btn:hover {
+	color: #ffffff;
+	background: linear-gradient(135deg, var(--home-primary, #1E3A8A), var(--home-secondary, #2563EB));
+	border-color: rgba(255, 255, 255, 0.4);
+	box-shadow: 0 6px 14px -4px rgba(30, 58, 138, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.08);
+	transform: translateY(-2px);
+}
+
+nav .nav-active {
+	background: linear-gradient(135deg, var(--home-primary, #1E3A8A), var(--home-secondary, #2563EB));
+	color: #ffffff;
+	border-color: rgba(255, 255, 255, 0.45);
+	box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.25), 0 6px 18px -6px rgba(30, 58, 138, 0.45);
+}
+
+nav .btn-danger {
+	background: linear-gradient(135deg, var(--home-error, #B91C1C), #DC2626);
+	color: #fff;
+	border-color: rgba(185, 28, 28, 0.55);
+	box-shadow: 0 4px 12px -6px rgba(185, 28, 28, 0.55);
+}
+
+nav .btn-danger:hover {
+	background: linear-gradient(135deg, #991B1B, var(--home-error, #B91C1C));
+	box-shadow: 0 6px 18px -6px rgba(185, 28, 28, 0.6);
+	transform: translateY(-2px);
+}
+
+/* Small pill for user/email */
+.header-user {
+	font-size: 0.6rem;
+	color: var(--home-text, #1F2937);
+	background: rgba(255, 255, 255, 0.65);
+	padding: 0.45rem 0.75rem;
+	border-radius: 999px;
+	letter-spacing: .08em;
+	font-weight: 600;
+	-webkit-backdrop-filter: blur(8px);
+	-webkit-backdrop-filter: blur(8px);
+	backdrop-filter: blur(8px);
+	border: 1px solid rgba(255, 255, 255, 0.55);
+	box-shadow: 0 2px 6px -2px rgba(0, 0, 0, 0.2);
+}
+
+/* Light mode tweak (already light-ish) */
+@media (prefers-color-scheme: dark) {
+	.app-header {
+		box-shadow: 0 6px 22px -8px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.05);
+	}
+
+	nav .nav-btn {
+		background: rgba(255, 255, 255, 0.08);
+		border-color: rgba(255, 255, 255, 0.12);
+	}
+
+	.header-user {
+		background: rgba(255, 255, 255, 0.15);
+		color: #fff;
+		border-color: rgba(255, 255, 255, 0.25);
+	}
+}
+
+/* old header pill kept for potential inline use elsewhere */
+.header-user {
+	display: none;
+}
 
 /* Responsive tweaks */
 @media (max-width:720px) {
-	.app-header { flex-wrap:wrap; gap:0.75rem; }
-	nav { flex-wrap:wrap; }
-	nav .nav-btn, nav .nav-active, nav .btn-danger { font-size:0.6rem; padding:0.45rem 0.7rem; }
-	.header-user { display:none; }
+	.app-header {
+		flex-wrap: wrap;
+		gap: 0.6rem;
+		padding: 0.75rem 1rem;
+	}
+
+	nav {
+		flex-wrap: wrap;
+	}
+
+	nav .nav-btn,
+	nav .nav-active,
+	nav .btn-danger {
+		font-size: 0.55rem;
+		padding: 0.5rem 0.75rem;
+	}
+
+	.header-user {
+		display: none;
+	}
 }

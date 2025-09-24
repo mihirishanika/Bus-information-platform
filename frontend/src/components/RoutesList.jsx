@@ -1,4 +1,5 @@
 import React from 'react';
+import './RoutesList.css';
 
 // Basic list; filtering will be applied before passing routes prop.
 export default function RoutesList({ routes, selected, onSelect }) {
@@ -13,7 +14,7 @@ export default function RoutesList({ routes, selected, onSelect }) {
 						className={"btn-route" + (selected && selected.id === r.id ? ' selected' : '')}
 						onClick={() => onSelect(r)}
 					>
-						<strong>{r.code}</strong> – {r.name}
+						<strong>{r.code}</strong> – {r.name || `${r.from} → ${r.to}`}
 					</button>
 				</li>
 			))}

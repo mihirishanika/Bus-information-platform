@@ -1,0 +1,11 @@
+version = 0.1
+
+[default.deploy.parameters]
+stack_name = "businfo-backend"
+resolve_s3 = true
+s3_prefix = "businfo-backend"
+region = "us-east-1"
+confirm_changeset = true
+capabilities = "CAPABILITY_IAM"
+parameter_overrides = "UserPoolArn=\"arn:aws:cognito-idp:us-east-1:174919262358:userpool/us-east-1_pCOQlchk4\" AllowedOrigin=\"http://localhost:5173\""
+image_repositories = []

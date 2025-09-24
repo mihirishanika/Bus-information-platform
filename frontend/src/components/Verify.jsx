@@ -1,74 +1,126 @@
 import React, { useEffect, useState } from 'react';
 import './Verify.css';
-
-/* Demo pending verification list stored in localStorage for persistence across refresh.
-   Each pending item shape: { id, busNumber, submitter, submittedAt, status }
-*/
-const STORAGE_KEY = 'pendingBusVerifications';
-
-function loadPending() {
-  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; } catch { return []; }
-}
-function savePending(list) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
-}
-
-// Seed with a few demo entries if empty
-function ensureSeed() {
-  const current = loadPending();
-  if (current.length === 0) {
-    const seed = [
-      { id:'PB-001', busNumber:'NC-1234', submitter:'demo@user.com', submittedAt: Date.now() - 3600_000, status:'pending' },
-      { id:'PB-002', busNumber:'NA-8899', submitter:'ops@fleet.com', submittedAt: Date.now() - 8600_000, status:'pending' },
-      { id:'PB-003', busNumber:'WP-4455', submitter:'owner@buses.lk', submittedAt: Date.now() - 200_000, status:'pending' }
-    ];
-    savePending(seed);
-    return seed;
-  }
-  return current;
-}
+import { listBuses, verifyBus } from '../api';
 
 export default function Verify({ onVerified }) {
-  const [items, setItems] = useState(() => ensureSeed());
-  const [filter, setFilter] = useState('pending');
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [successMessage, setSuccessMessage] = useState(null);
 
-  useEffect(() => { savePending(items); }, [items]);
+  const fetchNewBuses = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await listBuses();
 
-  const markVerified = (id) => {
-    setItems(list => list.map(i => i.id === id ? { ...i, status:'verified', verifiedAt: Date.now() } : i));
-    onVerified && onVerified(id);
+      // Filter to only show buses with no verifies or reports
+      const newBuses = response.buses.filter(bus =>
+        (bus.verifyCount === 0 || bus.verifyCount === undefined) &&
+        (bus.reportCount === 0 || bus.reportCount === undefined)
+      );
+
+      // Transform to match the component's expected format
+      const formattedBuses = newBuses.map(bus => ({
+        id: bus.id || bus.licenseNo,
+        busNumber: bus.busNumber || bus.licenseNo,
+        licenseNo: bus.licenseNo,
+        companyName: bus.companyName,
+        from: bus.from,
+        to: bus.to,
+        submitter: bus.submitter || 'Unknown',
+        submittedAt: new Date(bus.createdAt || Date.now()).getTime(),
+        status: 'pending'
+      }));
+
+      setItems(formattedBuses);
+    } catch (err) {
+      console.error('Error fetching new buses:', err);
+      setError('Failed to load new buses. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const visible = items.filter(i => filter === 'all' ? true : i.status === filter);
+  useEffect(() => {
+    fetchNewBuses();
+  }, []);
+
+  const markVerified = async (id) => {
+    try {
+      // Find the bus by id
+      const bus = items.find(item => item.id === id);
+      if (!bus) return;
+
+      // Call the API to verify the bus
+      await verifyBus(bus.licenseNo);
+
+      // Update local state
+      setItems(list => list.filter(i => i.id !== id));
+
+      // Show success message
+      setSuccessMessage(`Bus ${bus.busNumber} has been verified successfully!`);
+
+      // Clear success message after 3 seconds
+      setTimeout(() => {
+        setSuccessMessage(null);
+      }, 3000);
+
+      // Call the parent callback if provided
+      onVerified && onVerified(id);
+    } catch (err) {
+      console.error('Error verifying bus:', err);
+      setError('Failed to verify the bus. Please try again.');
+    }
+  };
 
   return (
-  <div className="verify page-wrapper">
-      <h2 className="verify__title">Pending Verification</h2>
+    <div className="verify page-wrapper">
+      <h2 className="verify__title">New Buses for Verification</h2>
       <div className="verify__pending-box">
-        <div style={{display:'flex', gap:'0.5rem', marginBottom:'0.75rem'}}>
-          {['pending','verified','all'].map(f => (
-            <button key={f} onClick={()=>setFilter(f)} className="verify__btn" style={filter===f ? {background:'#1d4ed8'} : {}}>{f.charAt(0).toUpperCase()+f.slice(1)}</button>
-          ))}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+          <p className="verify__section-label" style={{ margin: 0 }}>New Buses</p>
+          <button
+            onClick={fetchNewBuses}
+            disabled={loading}
+            className="verify__btn"
+          >
+            {loading ? 'Loading...' : 'Refresh List'}
+          </button>
         </div>
-        <p className="verify__section-label">Items</p>
+
+        {loading && (
+          <div className="verify__loading">Loading new buses...</div>
+        )}
+
+        {error && (
+          <div className="verify__error">{error}</div>
+        )}
+
+        {successMessage && (
+          <div className="verify__success">{successMessage}</div>
+        )}
+
         <ul className="verify__list">
-          {visible.map(item => (
+          {items.map(item => (
             <li key={item.id} className="verify__item">
               <div className="verify__bus">Bus Number: {item.busNumber}</div>
-              <div className="verify__meta">
-                <span>Submitted by {item.submitter}</span>
-                <span>{new Date(item.submittedAt).toLocaleString()}</span>
-                <span>Status: {item.status}</span>
-                {item.verifiedAt && <span>Verified: {new Date(item.verifiedAt).toLocaleString()}</span>}
+              <div className="verify__route">
+                Route: {item.from} → {item.to}
               </div>
-              {item.status === 'pending' && (
-                <div className="verify__btn-row">
-                  <button className="verify__btn" onClick={()=>markVerified(item.id)}>Verify</button>
-                </div>
-              )}
+              <div className="verify__meta">
+                <span>Company: {item.companyName}</span>
+                <span>License No: {item.licenseNo}</span>
+                <span>Added: {new Date(item.submittedAt).toLocaleString()}</span>
+              </div>
+              <div className="verify__btn-row">
+                <button className="verify__btn" onClick={() => markVerified(item.id)}>Verify</button>
+              </div>
             </li>
           ))}
-          {visible.length === 0 && <li className="verify__empty">No items for this filter.</li>}
+          {!loading && items.length === 0 && (
+            <li className="verify__empty">No new buses to verify.</li>
+          )}
         </ul>
       </div>
     </div>

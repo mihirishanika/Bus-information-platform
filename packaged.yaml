@@ -1,0 +1,220 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: BUS INFO LK - Bus Information Platform with DynamoDB (No Auth Mode)
+Parameters:
+  AllowedOrigin:
+    Type: String
+    Default: '*'
+    Description: CORS allowed origin for API responses
+Globals:
+  Function:
+    Runtime: nodejs18.x
+    Timeout: 10
+    MemorySize: 256
+    Architectures:
+    - x86_64
+    Environment:
+      Variables:
+        BUS_TABLE_NAME:
+          Ref: BusTable
+        CORS_ORIGIN:
+          Ref: AllowedOrigin
+Resources:
+  BusTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName:
+        Fn::Sub: ${AWS::StackName}-buses
+      AttributeDefinitions:
+      - AttributeName: licenseNo
+        AttributeType: S
+      - AttributeName: companyName
+        AttributeType: S
+      - AttributeName: route
+        AttributeType: S
+      - AttributeName: busType
+        AttributeType: S
+      KeySchema:
+      - AttributeName: licenseNo
+        KeyType: HASH
+      GlobalSecondaryIndexes:
+      - IndexName: CompanyIndex
+        KeySchema:
+        - AttributeName: companyName
+          KeyType: HASH
+        Projection:
+          ProjectionType: ALL
+      - IndexName: RouteIndex
+        KeySchema:
+        - AttributeName: route
+          KeyType: HASH
+        Projection:
+          ProjectionType: ALL
+      - IndexName: TypeIndex
+        KeySchema:
+        - AttributeName: busType
+          KeyType: HASH
+        Projection:
+          ProjectionType: ALL
+      BillingMode: PAY_PER_REQUEST
+      StreamSpecification:
+        StreamViewType: NEW_AND_OLD_IMAGES
+    Metadata:
+      SamResourceId: BusTable
+  ApiGatewayNoAuth:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: Prod
+      Cors:
+        AllowMethods: '''GET,POST,PUT,DELETE,OPTIONS'''
+        AllowHeaders: '''Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token'''
+        AllowOrigin:
+          Fn::Sub: '''${AllowedOrigin}'''
+        MaxAge: '''86400'''
+      GatewayResponses:
+        DEFAULT_4XX:
+          ResponseParameters:
+            Headers:
+              Access-Control-Allow-Origin:
+                Fn::Sub: '''${AllowedOrigin}'''
+              Access-Control-Allow-Headers: '''Content-Type,Authorization'''
+        DEFAULT_5XX:
+          ResponseParameters:
+            Headers:
+              Access-Control-Allow-Origin:
+                Fn::Sub: '''${AllowedOrigin}'''
+              Access-Control-Allow-Headers: '''Content-Type,Authorization'''
+    Metadata:
+      SamResourceId: ApiGatewayNoAuth
+  GetRoutesFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: s3://aws-sam-cli-managed-default-samclisourcebucket-viq3ml8zvdle/46763aec24ec639f9ba5772c49f6094b
+      Handler: index.handler
+      Policies:
+      - DynamoDBReadPolicy:
+          TableName:
+            Ref: BusTable
+      Events:
+        ApiEvent:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: ApiGatewayNoAuth
+            Path: /routes
+            Method: get
+    Metadata:
+      SamResourceId: GetRoutesFunction
+  GetNextBusFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: s3://aws-sam-cli-managed-default-samclisourcebucket-viq3ml8zvdle/102e9f95b9c4742affabbc26d9c24290
+      Handler: index.handler
+      Events:
+        ApiEvent:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: ApiGatewayNoAuth
+            Path: /next
+            Method: get
+    Metadata:
+      SamResourceId: GetNextBusFunction
+  BusFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: s3://aws-sam-cli-managed-default-samclisourcebucket-viq3ml8zvdle/744c05f8e58a022c46667a277da6396a
+      Handler: index.handler
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName:
+            Ref: BusTable
+      Events:
+        CreateBus:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: ApiGatewayNoAuth
+            Path: /buses
+            Method: post
+        ListBuses:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: ApiGatewayNoAuth
+            Path: /buses
+            Method: get
+        GetBus:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: ApiGatewayNoAuth
+            Path: /buses/{licenseNo}
+            Method: get
+        UpdateBus:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: ApiGatewayNoAuth
+            Path: /buses/{licenseNo}
+            Method: put
+    Metadata:
+      SamResourceId: BusFunction
+  SearchBusFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: s3://aws-sam-cli-managed-default-samclisourcebucket-viq3ml8zvdle/2057870d064b50b9ea34b42e5ba6c0a6
+      Handler: index.handler
+      Policies:
+      - DynamoDBReadPolicy:
+          TableName:
+            Ref: BusTable
+      Events:
+        SearchBus:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: ApiGatewayNoAuth
+            Path: /search
+            Method: get
+    Metadata:
+      SamResourceId: SearchBusFunction
+  ProtectedPingFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: s3://aws-sam-cli-managed-default-samclisourcebucket-viq3ml8zvdle/cdcbe9a8fcd53899f2031f11cee23b1e
+      Handler: index.handler
+      Events:
+        ApiEvent:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: ApiGatewayNoAuth
+            Path: /protected/ping
+            Method: get
+    Metadata:
+      SamResourceId: ProtectedPingFunction
+Outputs:
+  ApiUrl:
+    Description: Base URL for API Gateway
+    Value:
+      Fn::Sub: https://${ApiGatewayNoAuth}.execute-api.${AWS::Region}.amazonaws.com/Prod
+    Export:
+      Name:
+        Fn::Sub: ${AWS::StackName}-ApiUrl
+  BusTableName:
+    Description: DynamoDB table name for buses
+    Value:
+      Ref: BusTable
+    Export:
+      Name:
+        Fn::Sub: ${AWS::StackName}-BusTableName
+  BusTableArn:
+    Description: DynamoDB table ARN for buses
+    Value:
+      Fn::GetAtt:
+      - BusTable
+      - Arn
+    Export:
+      Name:
+        Fn::Sub: ${AWS::StackName}-BusTableArn

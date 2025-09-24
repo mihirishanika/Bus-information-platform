@@ -1,10 +1,7 @@
 // Shared static route dataset (demo only)
 export const routes = [
-	{ id: 'R-001', code: '100', from: 'Colombo', to: 'Kandy', type: 'luxury', verified: true, popular: true, headwayMins: 45 },
-	{ id: 'R-002', code: '101', from: 'Colombo', to: 'Galle', type: 'semi', verified: true, popular: true, headwayMins: 60 },
-	{ id: 'R-003', code: '102', from: 'Kandy', to: 'Jaffna', type: 'normal', verified: false, popular: false, headwayMins: 120 },
-	{ id: 'R-004', code: '103', from: 'Colombo', to: 'Matara', type: 'luxury', verified: true, popular: true, headwayMins: 55 },
-	{ id: 'R-005', code: '104', from: 'Kurunegala', to: 'Colombo', type: 'normal', verified: true, popular: false, headwayMins: 40 }
+	// Routes should be populated from the database in production
+	// This is kept empty to avoid hardcoded data
 ];
 
 export function computeNextDeparture(route) {
