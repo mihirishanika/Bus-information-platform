@@ -1202,3 +1202,35 @@
         font-size: 1.4rem;
     }
 }
+
+/* Direction indicator styles for directional search results */
+.route-display {
+    font-weight: 600;
+    color: var(--home-text, #1F2937);
+}
+
+.direction-indicator {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 1rem;
+    margin-left: 0.75rem;
+    font-weight: 500;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.direction-indicator.forward {
+    background-color: #10B981;
+    color: white;
+}
+
+.direction-indicator.return {
+    background-color: #F59E0B;
+    color: white;
+}
+
+/* Enhanced route display for directional searches */
+.search-results__route .route-display+.direction-indicator {
+    position: relative;
+    top: -1px;
+}

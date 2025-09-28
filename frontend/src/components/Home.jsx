@@ -132,7 +132,8 @@ export default function Home({ user, routes = [], onSearch }) {
     // No search query - filter from routes
     return routes.filter(r => {
       if (verifiedOnly && !r.verified) return false;
-      if (typeFilter !== 'all' && r.type !== typeFilter) return false;
+      // Check both type and busType for consistency
+      if (typeFilter !== 'all' && r.type !== typeFilter && r.busType !== typeFilter) return false;
       return true;
     });
   }, [routes, searchResults, query, typeFilter, verifiedOnly]);

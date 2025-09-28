@@ -7,5 +7,5 @@ s3_prefix = "businfo-backend"
 region = "us-east-1"
 confirm_changeset = true
 capabilities = "CAPABILITY_IAM"
-parameter_overrides = "UserPoolArn=\"\" AllowedOrigin=\"http://localhost:5173\""
+parameter_overrides = "UserPoolArn=\"\" AllowedOrigin=\"http://localhost:5173\" VpcId=\"vpc-02c3d636a30862e21\" SubnetIds=\"subnet-07795bb737fb39207,subnet-0d6335630dbb533a7\""
 image_repositories = []

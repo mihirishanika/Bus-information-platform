@@ -1,27 +1,72 @@
-(node:19424) NOTE: The AWS SDK for JavaScript (v2) is in maintenance mode.
+nohup: ignoring input
+(node:24046) NOTE: The AWS SDK for JavaScript (v2) is in maintenance mode.
  SDK releases are limited to address critical bug fixes and security issues only.
 
 Please migrate your code to use AWS SDK for JavaScript (v3).
 For more information, check the blog post at https://a.co/cUPnyil
 (Use `node --trace-warnings ...` to show where the warning was created)
 Backend running at http://localhost:4000
-[0mGET /health [32m200[0m 1.360 ms - 121[0m
-[0mOPTIONS /buses?limit=100 [32m204[0m 0.255 ms - 0[0m
-[0mGET /buses?limit=100 [32m200[0m 1077.258 ms - 823[0m
-[0mOPTIONS /buses?limit=100 [32m204[0m 0.164 ms - 0[0m
-[0mGET /buses?limit=100 [36m304[0m 1222.580 ms - -[0m
-[0mGET /buses [32m200[0m 1643.317 ms - 823[0m
-[0mGET /buses [32m200[0m 1166.210 ms - 823[0m
-[0mGET /search?q=Colombo [32m200[0m 1142.944 ms - 979[0m
-Cognito token verification failed: Error: Invalid token format
-    at verifyCognitoToken (file:///home/oshboy/Bus-information-platform/backend/server.js:215:13)
-    at Layer.handleRequest (/home/oshboy/Bus-information-platform/backend/node_modules/router/lib/layer.js:152:17)
-    at next (/home/oshboy/Bus-information-platform/backend/node_modules/router/lib/route.js:157:13)
-    at Route.dispatch (/home/oshboy/Bus-information-platform/backend/node_modules/router/lib/route.js:117:3)
-    at handle (/home/oshboy/Bus-information-platform/backend/node_modules/router/index.js:435:11)
-    at Layer.handleRequest (/home/oshboy/Bus-information-platform/backend/node_modules/router/lib/layer.js:152:17)
-    at /home/oshboy/Bus-information-platform/backend/node_modules/router/index.js:295:15
-    at processParams (/home/oshboy/Bus-information-platform/backend/node_modules/router/index.js:582:12)
-    at next (/home/oshboy/Bus-information-platform/backend/node_modules/router/index.js:291:5)
-    at cors (/home/oshboy/Bus-information-platform/backend/node_modules/cors/lib/index.js:188:7)
-[0mPOST /buses [33m401[0m 1.229 ms - 79[0m
+[0mGET /search?q=Jaffna%20%E2%86%92%20Colombo [32m200[0m 1079.470 ms - 2454[0m
+[0mGET /search?q=Jaffna%20to%20Colombo [32m200[0m 1217.263 ms - 2454[0m
+[0mGET /search?q=Jaffna%20%E2%86%92%20Colombo [32m200[0m 1734.703 ms - 2454[0m
+[0mGET /search?q=Jaffna%20-%3E%20Colombo [32m200[0m 1426.353 ms - 2454[0m
+[0mGET /search?q=Colombo%20to%20Jaffna [32m200[0m 1629.728 ms - 2456[0m
+[0mGET /search?q=Colombo%20%E2%86%92%20Jaffna [32m200[0m 1477.196 ms - 2456[0m
+[0mOPTIONS /search?q=j&type=luxury&verified=undefined [32m204[0m 0.264 ms - 0[0m
+[0mOPTIONS /search?q=ja&type=luxury&verified=undefined [32m204[0m 0.228 ms - 0[0m
+[0mOPTIONS /search?q=jaf&type=luxury&verified=undefined [32m204[0m 0.116 ms - 0[0m
+[0mOPTIONS /search?q=jaff&type=luxury&verified=undefined [32m204[0m 0.155 ms - 0[0m
+[0mGET /search?q=j&type=luxury&verified=undefined [32m200[0m 1462.155 ms - 1842[0m
+[0mGET /search?q=ja&type=luxury&verified=undefined [32m200[0m 1376.803 ms - 1843[0m
+[0mOPTIONS /search?q=jaffn&type=luxury&verified=undefined [32m204[0m 0.111 ms - 0[0m
+[0mGET /search?q=jaf&type=luxury&verified=undefined [32m200[0m 1129.397 ms - 995[0m
+[0mGET /search?q=jaff&type=luxury&verified=undefined [32m200[0m 1180.133 ms - 996[0m
+[0mGET /search?q=jaffn&type=luxury&verified=undefined [32m200[0m 1159.967 ms - 997[0m
+[0mOPTIONS /search?q=jaffna&type=luxury&verified=undefined [32m204[0m 0.107 ms - 0[0m
+[0mOPTIONS /search?q=jaffna [32m204[0m 0.121 ms - 0[0m
+[0mGET /search?q=jaffna&type=luxury&verified=undefined [32m200[0m 1110.353 ms - 998[0m
+[0mGET /search?q=jaffna [32m200[0m 1186.279 ms - 3039[0m
+[0mOPTIONS /buses/NC%205623/my-vote [32m204[0m 0.078 ms - 0[0m
+[0mOPTIONS /buses/NC%201212/my-vote [32m204[0m 0.071 ms - 0[0m
+[0mOPTIONS /buses/Nc%205656/my-vote [32m204[0m 0.076 ms - 0[0m
+[0mGET /buses/NC%205623/my-vote [36m304[0m 1326.036 ms - -[0m
+[0mGET /buses/Nc%205656/my-vote [36m304[0m 1322.623 ms - -[0m
+[0mGET /buses/NC%201212/my-vote [36m304[0m 1324.909 ms - -[0m
+[0mOPTIONS /buses/NC%205623/report [32m204[0m 0.085 ms - 0[0m
+[0mPOST /buses/NC%205623/report [32m200[0m 4151.713 ms - 72[0m
+[0mOPTIONS /buses/NC%205623/verify [32m204[0m 0.095 ms - 0[0m
+[0mPOST /buses/NC%205623/verify [32m200[0m 3774.447 ms - 71[0m
+[0mGET /search?type=luxury [32m200[0m 1096.981 ms - 1841[0m
+[0mOPTIONS /search?q=c&type=undefined&verified=undefined [32m204[0m 0.077 ms - 0[0m
+[0mOPTIONS /search?q=co&type=undefined&verified=undefined [32m204[0m 0.093 ms - 0[0m
+[0mOPTIONS /search?q=col&type=undefined&verified=undefined [32m204[0m 0.077 ms - 0[0m
+[0mOPTIONS /search?q=colo&type=undefined&verified=undefined [32m204[0m 0.079 ms - 0[0m
+[0mOPTIONS /search?q=colom&type=undefined&verified=undefined [32m204[0m 0.075 ms - 0[0m
+[0mOPTIONS /search?q=colomb&type=undefined&verified=undefined [32m204[0m 0.083 ms - 0[0m
+[0mGET /search?q=co&type=undefined&verified=undefined [36m304[0m 1404.090 ms - -[0m
+[0mGET /search?q=col&type=undefined&verified=undefined [36m304[0m 1202.900 ms - -[0m
+[0mGET /search?q=colo&type=undefined&verified=undefined [36m304[0m 1025.210 ms - -[0m
+[0mOPTIONS /search?q=colombo&type=undefined&verified=undefined [32m204[0m 0.122 ms - 0[0m
+[0mGET /search?q=c&type=undefined&verified=undefined [36m304[0m 1797.706 ms - -[0m
+[0mOPTIONS /search?q=colombo [32m204[0m 0.073 ms - 0[0m
+[0mGET /search?q=colom&type=undefined&verified=undefined [36m304[0m 1332.510 ms - -[0m
+[0mGET /search?q=colombo&type=undefined&verified=undefined [36m304[0m 1217.317 ms - -[0m
+[0mGET /search?q=colomb&type=undefined&verified=undefined [36m304[0m 1335.206 ms - -[0m
+[0mGET /search?q=colombo [32m200[0m 1294.474 ms - 4999[0m
+[0mOPTIONS /buses/NA-1234 [32m204[0m 0.093 ms - 0[0m
+[0mOPTIONS /buses/NA-5678 [32m204[0m 0.056 ms - 0[0m
+[0mOPTIONS /buses/NC%207878/my-vote [32m204[0m 0.065 ms - 0[0m
+[0mOPTIONS /buses/NC%205623/my-vote [32m204[0m 0.075 ms - 0[0m
+[0mOPTIONS /buses/NA-1234/my-vote [32m204[0m 0.068 ms - 0[0m
+[0mOPTIONS /buses/NC%205656/my-vote [32m204[0m 0.066 ms - 0[0m
+[0mOPTIONS /buses/NC%201212/my-vote [32m204[0m 0.041 ms - 0[0m
+[0mOPTIONS /buses/NA-5678/my-vote [32m204[0m 0.040 ms - 0[0m
+[0mGET /buses/NA-1234/my-vote [36m304[0m 1417.151 ms - -[0m
+[0mGET /buses/NC%205656/my-vote [36m304[0m 1416.618 ms - -[0m
+[0mGET /buses/NC%207878/my-vote [36m304[0m 1420.841 ms - -[0m
+[0mGET /buses/NA-1234 [36m304[0m 1423.764 ms - -[0m
+[0mGET /buses/NC%205623/my-vote [32m200[0m 1420.612 ms - 37[0m
+[0mGET /buses/NA-5678 [32m200[0m 1423.206 ms - 325[0m
+[0mGET /buses/NC%201212/my-vote [36m304[0m 1224.703 ms - -[0m
+[0mGET /buses/NA-5678/my-vote [32m200[0m 1223.057 ms - 37[0m
+[0mGET /search?type=semi [32m200[0m 1210.958 ms - 2311[0m

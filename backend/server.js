@@ -721,9 +721,9 @@ app.get("/search", async (req, res) => {
     let from = req.query.from?.trim() || '';
     let to = req.query.to?.trim() || '';
 
-    // Check if query is a directional search (e.g., "ja ela to kandy" or "kandy to ja ela")
+    // Check if query is a directional search (e.g., "ja ela to kandy", "kandy to ja ela", or "Jaffna → Colombo")
     if (!directional && query) {
-      const directionalMatch = query.match(/^(.+?)\s+to\s+(.+?)$/i);
+      const directionalMatch = query.match(/^(.+?)\s+(?:to|→|->)\s+(.+?)$/i);
       if (directionalMatch) {
         directional = true;
         from = directionalMatch[1].trim();

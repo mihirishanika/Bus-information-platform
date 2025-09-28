@@ -1,8 +1,11 @@
+````markdown
 # Bus Information Platform
 
 ## About the Project
 
 Bus Information Platform is a web application designed to provide information about buses and their routes. The platform allows users to search for buses, view bus routes, and access verified information about the buses. It features a responsive frontend built with React and a backend API powered by Node.js with AWS services integration. The application supports user authentication via Amazon Cognito, including social sign-in with Google.
+
+The platform uses a Network Load Balancer (NLB) with Elastic IPs for providing a static IP address for the backend API, ensuring consistent connectivity regardless of underlying infrastructure changes.
 
 ## Dependencies
 
@@ -86,10 +89,44 @@ sam build
 sam deploy --guided
 ```
 
+### Deploying with Network Load Balancer (Static IP)
+
+To deploy the application with a Network Load Balancer that provides static IP addresses:
+
+1. Use our automated deployment script (recommended):
+   ```bash
+   ./scripts/deploy-nlb.sh
+   ```
+   This script will:
+   - Help you select your VPC and subnets
+   - Clean up any failed deployments
+   - Choose the best template based on your requirements
+   - Handle the deployment process
+   - Update your frontend configuration
+
+2. Or deploy manually using the appropriate template:
+   ```bash
+   # If using Cognito auth:
+   sam deploy --template-file template-nlb.yaml --guided
+   
+   # If encountering auth errors:
+   sam deploy --template-file template-nlb-alt.yaml --guided
+   
+   # Simplest approach (no auth):
+   sam deploy --template-file template-nlb-noauth.yaml --guided
+   ```
+
+3. For detailed instructions, see the [NLB Deployment Guide](./NLB-DEPLOYMENT-GUIDE.md).
+
+4. For detailed configuration options and troubleshooting, refer to the [NLB Configuration Guide](./NLB-CONFIG.md).
+
+The NLB setup provides two static Elastic IPs that you can use for your API endpoint, ensuring that your backend API has consistent IP addresses even if the underlying infrastructure changes.
+
 ## Key Features
 - User authentication with Amazon Cognito
 - Bus information search and browsing
 - Real-time next bus arrival information
 - Google sign-in integration
 - Mobile-responsive design
+- Static IP addresses for backend API via Network Load Balancer
 

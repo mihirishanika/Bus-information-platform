@@ -42,8 +42,8 @@ export default function SearchResults({ query, onBack }) {
     setError(null);
 
     try {
-      // Check if query is a directional search (e.g., "ja ela to kandy" or "kandy to ja ela")
-      const directionalMatch = query.match(/^(.+?)\s+to\s+(.+?)$/i);
+      // Check if query is a directional search (e.g., "ja ela to kandy", "kandy to ja ela", or "Jaffna → Colombo")
+      const directionalMatch = query.match(/^(.+?)\s+(?:to|→|->)\s+(.+?)$/i);
       let response;
 
       if (directionalMatch) {
@@ -506,9 +506,22 @@ export default function SearchResults({ query, onBack }) {
 
                   <div className="search-results__route">
                     <BiMapAlt className="icon" aria-hidden />
-                    <span className="route-seg from">{bus.from}</span>
-                    <span className="route-arrow" aria-hidden>→</span>
-                    <span className="route-seg to">{bus.to}</span>
+                    {isDirectional && bus.direction && bus.name ? (
+                      // For directional search, show the correct route direction with direction indicator
+                      <>
+                        <span className="route-display">{bus.name}</span>
+                        <span className={`direction-indicator ${bus.direction}`}>
+                          {bus.direction === 'return' ? '(Return Journey)' : '(Direct Journey)'}
+                        </span>
+                      </>
+                    ) : (
+                      // For general search, show the standard route
+                      <>
+                        <span className="route-seg from">{bus.from}</span>
+                        <span className="route-arrow" aria-hidden>→</span>
+                        <span className="route-seg to">{bus.to}</span>
+                      </>
+                    )}
                   </div>
 
                   <div className="search-results__meta">
